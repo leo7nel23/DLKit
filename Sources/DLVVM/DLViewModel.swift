@@ -10,7 +10,7 @@ import Foundation
 public typealias DLViewModel = DevinLaiViewModel
 
 public protocol DevinLaiViewModel {
-  associatedtype ViewObservation: Observable
+  associatedtype ViewObservation
 
   var observation: ViewObservation { get }
 
