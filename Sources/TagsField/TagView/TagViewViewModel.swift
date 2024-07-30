@@ -1,6 +1,6 @@
 //
 //  
-//  DLTagViewViewModel.swift
+//  TagViewViewModel.swift
 //  
 //
 //  Created by 賴柏宏 on 2024/7/26.
@@ -9,11 +9,11 @@
 
 import DLVVM
 
-// MARK: - DLTagViewViewModel
+// MARK: - TagViewViewModel
 
-public final class DLTagViewViewModel: DLReducibleViewModel, Identifiable {
+public final class TagViewViewModel: DLReducibleViewModel, Identifiable {
 
-  public typealias Reducer = DLTagViewReducer
+  public typealias Reducer = TagViewReducer
 
   public let id: String = { UUID().uuidString }()
 
@@ -33,8 +33,7 @@ public final class DLTagViewViewModel: DLReducibleViewModel, Identifiable {
 
   private func setUpSubscriptions() {
     properties.actionPublisher
-      .sink { [weak self, observation, eventSubject] action in
-        guard let self = self else { return }
+      .sink { [observation, eventSubject] action in
         switch action {
           case let .updateText(text):
             observation.tag = text
@@ -53,16 +52,16 @@ public final class DLTagViewViewModel: DLReducibleViewModel, Identifiable {
   }
 }
 
-// MARK: DLTagViewViewModel.Event
+// MARK: TagViewViewModel.Event
 
-extension DLTagViewViewModel: DLEventPublisher {
+extension TagViewViewModel: DLEventPublisher {
   public enum Event {
     case newTagAdded
     case removeIfNeed
   }
 }
 
-public extension DLTagViewViewModel {
+public extension TagViewViewModel {
   enum Manipulation {
     case enableEditing
   }
@@ -72,7 +71,7 @@ public extension DLTagViewViewModel {
   }
 }
 
-extension DLTagViewViewModel {
+extension TagViewViewModel {
   @Observable
   public class ViewObservation {
     var tag: String = ""
@@ -91,7 +90,7 @@ extension DLTagViewViewModel {
   }
 }
 
-public extension DLTagViewViewModel {
+public extension TagViewViewModel {
   enum ViewAction {
     case updateTag(String)
     case deleteTapped

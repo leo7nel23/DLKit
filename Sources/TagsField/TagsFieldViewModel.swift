@@ -1,6 +1,6 @@
 //
 //  
-//  DLTagsFieldViewModel.swift
+//  TagsFieldViewModel.swift
 //  
 //
 //  Created by 賴柏宏 on 2024/7/26.
@@ -9,11 +9,11 @@
 
 import DLVVM
 
-// MARK: - DLTagsFieldViewModel
+// MARK: - TagsFieldViewModel
 
-public final class DLTagsFieldViewModel: DLReducibleViewModel {
+public final class TagsFieldViewModel: DLReducibleViewModel {
 
-  public typealias Reducer = DLTagsFieldReducer
+  public typealias Reducer = TagsFieldReducer
 
   private let eventSubject = PassthroughSubject<Event, Never>()
   public var eventPublisher: AnyPublisher<Event, Never> { eventSubject.eraseToAnyPublisher() }
@@ -46,33 +46,22 @@ public final class DLTagsFieldViewModel: DLReducibleViewModel {
   }
 }
 
-// MARK: DLTagsFieldViewModel.Event
+// MARK: TagsFieldViewModel.Event
 
-extension DLTagsFieldViewModel: DLEventPublisher {
+extension TagsFieldViewModel: DLEventPublisher {
   public enum Event {
 
   }
 }
 
-public extension DLTagsFieldViewModel {
-  enum Manipulation {
-
-  }
-
-  func manipulate(_ manipulation: Manipulation) {
-    reduce(.manipulation(manipulation))
-  }
-}
-
-extension DLTagsFieldViewModel {
+extension TagsFieldViewModel {
   @Observable
   public class ViewObservation {
-    fileprivate(set) var tagViewModels: [DLTagViewViewModel]
+    fileprivate(set) var tagViewModels: [TagViewViewModel]
 
-    init(tagViewModels: [DLTagViewViewModel]) {
+    init(tagViewModels: [TagViewViewModel]) {
       self.tagViewModels = tagViewModels
     }
-
   }
 
   private func makeViewObservation() -> ViewObservation {
@@ -81,17 +70,9 @@ extension DLTagsFieldViewModel {
     ])
   }
 
-  private func makeTagViewModel(_ text: String? = nil) -> DLTagViewViewModel {
+  private func makeTagViewModel(_ text: String? = nil) -> TagViewViewModel {
     makeSubViewModel {
-      DLTagViewViewModel()
+      TagViewViewModel()
     } convertAction: { .tagEventReceived($0) }
-  }
-}
-
-public extension DLTagsFieldViewModel {
-  enum ViewAction {}
-
-  func handle(_ viewAction: ViewAction) {
-    reduce(.viewAction(viewAction))
   }
 }

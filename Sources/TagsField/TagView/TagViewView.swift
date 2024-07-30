@@ -1,6 +1,6 @@
 //
 //  
-//  DLTagViewView.swift
+//  TagViewView.swift
 //  
 //
 //  Created by 賴柏宏 on 2024/7/26.
@@ -9,9 +9,9 @@
 
 import DLVVM
 
-struct DLTagViewView: DLView {
+struct TagViewView: DLView {
 
-  typealias ViewModel = DLTagViewViewModel
+  typealias ViewModel = TagViewViewModel
 
   @State var observation: ViewModel.ViewObservation
 
@@ -51,5 +51,5 @@ struct DLTagViewView: DLView {
 }
 
 #Preview {
-  DLTagViewView(viewModel: .init())
+  TagViewView(viewModel: .init())
 }

@@ -1,6 +1,6 @@
 //
 //
-//  DLTagViewReducer.swift
+//  TagViewReducer.swift
 //
 //
 //  Created by 賴柏宏 on 2024/7/26.
@@ -11,11 +11,11 @@ import Combine
 import DLVVM
 import Foundation
 
-// MARK: - DLTagViewViewModel.Properties
+// MARK: - TagViewViewModel.Properties
 
-public extension DLTagViewViewModel {
+public extension TagViewViewModel {
   final class Properties: DLProperties {
-    public typealias ViewModel = DLTagViewViewModel
+    public typealias ViewModel = TagViewViewModel
 
     fileprivate let actionSubject = PassthroughSubject<Action, Never>()
     var actionPublisher: AnyPublisher<Action, Never> { actionSubject.eraseToAnyPublisher() }
@@ -35,10 +35,10 @@ public extension DLTagViewViewModel {
   }
 }
 
-// MARK: - DLTagViewReducer
+// MARK: - TagViewReducer
 
-public enum DLTagViewReducer: DLReducer {
-  public typealias ViewModel = DLTagViewViewModel
+public enum TagViewReducer: DLReducer {
+  public typealias ViewModel = TagViewViewModel
 
   public enum Action {
     case viewAction(ViewModel.ViewAction)

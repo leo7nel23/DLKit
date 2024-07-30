@@ -1,6 +1,6 @@
 //
 //  
-//  DLTagsFieldView.swift
+//  TagsFieldView.swift
 //  
 //
 //  Created by 賴柏宏 on 2024/7/26.
@@ -10,9 +10,9 @@
 import DLVVM
 import FlowLayout
 
-public struct DLTagsFieldView: DLView {
+public struct TagsFieldView: DLView {
 
-  public typealias ViewModel = DLTagsFieldViewModel
+  public typealias ViewModel = TagsFieldViewModel
 
   @State public private(set) var observation: ViewModel.ViewObservation
 
@@ -26,14 +26,14 @@ public struct DLTagsFieldView: DLView {
   public var body: some View {
     HFlow {
       ForEach(observation.tagViewModels) {
-        DLTagViewView(viewModel: $0)
+        TagViewView(viewModel: $0)
       }
     }
   }
 }
 
 #Preview {
-  DLTagsFieldView(viewModel: .init())
+  TagsFieldView(viewModel: .init())
     .background(.gray)
 
 }
