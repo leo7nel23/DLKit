@@ -12,3 +12,11 @@ public typealias DLViewModel = DevinLaiViewModel
 public protocol DevinLaiViewModel: AnyObject {
 
 }
+
+extension DLViewModel {
+  func makeSubViewModel<T: DLViewModel>(
+    _ maker: () -> T
+  ) -> T {
+    maker()
+  }
+}
