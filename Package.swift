@@ -19,6 +19,10 @@ let package = Package(
         .library(
           name: "TagsField",
           targets: ["TagsField"]
+        ),
+        .library(
+          name: "Utils",
+          targets: ["Utils"]
         )
     ],
     dependencies: [
@@ -38,6 +42,9 @@ let package = Package(
             .Flow,
             .DLVVM
           ]
+        ),
+        .target(
+          name: "Utils"
         )
     ]
 )
