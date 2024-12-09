@@ -9,25 +9,25 @@
 
 public protocol DestinationCase: Hashable & Identifiable {}
 
+public struct CoordinatorConfiguration<T> {
+  let rootDestination: T
+  let autoHideNavigationBar: Bool
+
+  public init(rootDestination: T, autoHideNavigationBar: Bool) {
+    self.rootDestination = rootDestination
+    self.autoHideNavigationBar = autoHideNavigationBar
+  }
+}
+
 // MARK: - DefaultCoordinatorViewModel
 final public class DefaultCoordinatorViewModel<T: DestinationCase>: DLPropertiesViewModel {
-
-  public struct Configuration {
-    let rootDestination: T
-    let autoHideNavigationBar: Bool
-
-    public init(rootDestination: T, autoHideNavigationBar: Bool) {
-      self.rootDestination = rootDestination
-      self.autoHideNavigationBar = autoHideNavigationBar
-    }
-  }
 
   public class Properties: DLProperties {
     public typealias ViewModel = DefaultCoordinatorViewModel
 
-    let config: Configuration
+    let config: CoordinatorConfiguration<T>
 
-    init(config: Configuration) {
+    init(config: CoordinatorConfiguration<T>) {
       self.config = config
     }
   }
@@ -43,7 +43,7 @@ final public class DefaultCoordinatorViewModel<T: DestinationCase>: DLProperties
 
   public init(
     viewBuilder: @escaping (T) -> any View,
-    config: Configuration
+    config: CoordinatorConfiguration<T>
   ) {
     self.viewBuilder = viewBuilder
     self.properties = Properties(config: config)
