@@ -1,11 +1,13 @@
 //
-//  
+//
 //  CoordinatorViewModel.swift
 //  DLKit
 //
 //  Created by 賴柏宏 on 2024/12/9.
 //
 //
+
+import Combine
 
 public protocol DestinationCase: Hashable & Identifiable {}
 
@@ -19,111 +21,77 @@ public struct CoordinatorConfiguration<T> {
   }
 }
 
-// MARK: - DefaultCoordinatorViewModel
-final public class DefaultCoordinatorViewModel<T: DestinationCase>: DLPropertiesViewModel {
+public typealias DLCoordinatorViewModel = DevinLaiCoordinatorViewModel
 
-  public class Properties: DLProperties {
-    public typealias ViewModel = DefaultCoordinatorViewModel
+public protocol DevinLaiCoordinatorViewModel: DLViewModel where ViewObservation: DefaultCoordinatorObservation<T> {
+  associatedtype T: DestinationCase
 
-    let config: CoordinatorConfiguration<T>
+  func push(_ destination: T)
+  func presentSheet(_ destination: T)
+  func presentFullScreenCover(_ destination: T)
+  func pop()
+  func popToRoot()
+  func dismiss()
+  func dismissSheet()
+  func dismissFullScreenOver()
+  func view(for destination: T) -> any View
 
-    init(config: CoordinatorConfiguration<T>) {
-      self.config = config
-    }
-  }
+  var observation: ViewObservation { get }
+}
 
-  lazy public internal(set) var observation: ViewObservation = makeViewObservation()
+@Observable
+open class DefaultCoordinatorObservation<Destination: DestinationCase> {
+  var path: [Destination] = []
+  var sheet: Destination?
+  var fullScreenCover: Destination?
+  var root: Destination
+  var onDismissSubject = PassthroughSubject<Void, Never>()
 
-  public internal(set) var properties: Properties
-
-  public var subscriptions = Set<AnyCancellable>()
-
-
-  let viewBuilder: (T) -> any View
-
-  public init(
-    viewBuilder: @escaping (T) -> any View,
-    config: CoordinatorConfiguration<T>
-  ) {
-    self.viewBuilder = viewBuilder
-    self.properties = Properties(config: config)
+  public init(root: Destination) {
+    self.root = root
   }
 }
 
-// work function
-extension DefaultCoordinatorViewModel {
-  public func push(_ destination: T) {
+public extension DevinLaiCoordinatorViewModel {
+  func push(_ destination: T) {
     observation.path.append(destination)
   }
 
-  public func presentSheet(_ destination: T) {
+  func presentSheet(_ destination: T) {
     observation.sheet = destination
   }
 
-  public func presentFullScreenCover(_ destination: T) {
+  func presentFullScreenCover(_ destination: T) {
     observation.fullScreenCover = destination
   }
 
-  public func pop() {
+  func pop() {
     guard !observation.path.isEmpty else { return }
     observation.path.removeLast()
   }
 
-  public func popToRoot() {
+  func popToRoot() {
     observation.path.removeLast(observation.path.count)
   }
 
-  public func dismissSheet() {
+  func dismiss() {
+    observation.onDismissSubject.send()
+  }
+
+  func dismissSheet() {
     observation.sheet = nil
   }
 
-  public func dismissFullScreenOver() {
+  func dismissFullScreenOver() {
     observation.fullScreenCover = nil
   }
 
-  public func dismissLastView() {
-    if observation.sheet != nil {
-      dismissSheet()
-    } else if observation.fullScreenCover != nil {
-      dismissFullScreenOver()
-    } else {
-      pop()
-    }
-  }
-
   func buildView(for destination: T) -> AnyView {
-    var view = viewBuilder(destination)
-    if let dlView = view as? (any DLView),
-       let viewModel = dlView.viewModel as? (any DLCoordinatable) {
+    let view = view(for: destination)
+    if let view = view as? any DLView,
+       let viewModel = view.viewModel as? (any DLCoordinatable) {
       viewModel.set(coordinator: self)
     }
-    if properties.config.autoHideNavigationBar {
-      if #available(iOS 18.0, *) {
-        view = view.toolbarVisibility(.hidden, for: .navigationBar)
-      } else {
-        view = view.navigationBarHidden(true)
-      }
-    }
     return AnyView(view)
-  }
-}
-
-public extension DefaultCoordinatorViewModel {
-  @Observable
-  class ViewObservation {
-    let root: T
-    var path: [T] = []
-    var sheet: T?
-    var fullScreenCover: T?
-
-    init(root: T) {
-      self.root = root
-    }
-  }
-
-  private func makeViewObservation() -> ViewObservation {
-    ViewObservation(
-      root: properties.config.rootDestination
-    )
   }
 }

@@ -24,7 +24,7 @@ public struct TagsFieldView: DLView {
   }
 
   public var body: some View {
-    HFlow {
+    HFlow(alignment: .leading, verticalSpacing: 2, horizontalSpacing: 4) {
       ForEach(observation.tagViewModels) {
         TagViewView(viewModel: $0)
       }
@@ -33,7 +33,7 @@ public struct TagsFieldView: DLView {
 }
 
 #Preview {
-  TagsFieldView(viewModel: .init())
+  TagsFieldView(viewModel: .init(placeholder: "Symbol", defaultTags: ["QQQ", "ABC", "DD"]))
     .background(.gray)
 
 }

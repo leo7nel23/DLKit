@@ -21,6 +21,10 @@ let package = Package(
           targets: ["TagsField"]
         ),
         .library(
+          name: "SwiftUIKit",
+          targets: ["SwiftUIKit"]
+        ),
+        .library(
           name: "Utils",
           targets: ["Utils"]
         )
@@ -42,6 +46,9 @@ let package = Package(
             .Flow,
             .DLVVM
           ]
+        ),
+        .target(
+          name: "SwiftUIKit"
         ),
         .target(
           name: "Utils"

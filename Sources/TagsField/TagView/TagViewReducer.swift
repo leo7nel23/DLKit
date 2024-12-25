@@ -27,10 +27,12 @@ public extension TagViewViewModel {
       case needToRemove
     }
 
-    fileprivate(set) var currentText: String = ""
+    fileprivate(set) var currentText: String
+    let placeholder: String?
 
-    init(defaultText: String) {
-      currentText = defaultText
+    init(placeholder: String?, text: String?) {
+      self.placeholder = placeholder
+      currentText = text ?? ""
     }
   }
 }
@@ -57,7 +59,7 @@ public enum TagViewReducer: DLReducer {
   private static func handle(viewAction: ViewModel.ViewAction, with properties: Properties) {
     switch viewAction {
     case let .updateTag(text):
-      if text.hasSuffix(",") || text.hasSuffix(" ") {
+      if text.hasSuffix(",") || text.hasSuffix(" ") || text.hasSuffix("\n") {
         properties.currentText = String(text.dropLast())
         guard !properties.currentText.isEmpty else { return }
         properties.actionSubject.send(.updateText(properties.currentText))

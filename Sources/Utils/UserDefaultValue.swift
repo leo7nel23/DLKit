@@ -9,9 +9,15 @@ import Foundation
 
 @propertyWrapper
 public struct UserDefaultValue<Value> {
-  let userDefault = UserDefaults.standard
+  let userDefault: UserDefaults
   let key: String
   let defaultValue: Value
+
+  public init(userDefault: UserDefaults = .standard, key: String, defaultValue: Value) {
+    self.userDefault = userDefault
+    self.key = key
+    self.defaultValue = defaultValue
+  }
 
   public var wrappedValue: Value {
     get {
@@ -21,10 +27,5 @@ public struct UserDefaultValue<Value> {
     set {
       userDefault.setValue(newValue, forKey: key)
     }
-  }
-
-  public init(key: String, defaultValue: Value) {
-    self.key = key
-    self.defaultValue = defaultValue
   }
 }

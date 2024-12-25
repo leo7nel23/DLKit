@@ -21,10 +21,15 @@ public extension TagsFieldViewModel {
 
     enum Action {
       case insertEmptyField
-      case popFieldIfNeed
+      case popField
     }
 
-    init() {
+    let placeholder: String?
+    @Published fileprivate(set) var currentTags: [String]
+
+    init(placeholder: String?, defaultTags: [String]) {
+      self.placeholder = placeholder
+      currentTags = defaultTags
     }
   }
 }
@@ -48,8 +53,11 @@ public enum TagsFieldReducer: DLReducer {
   private static func handle(_ event: TagViewViewModel.Event, with properties: Properties) {
     switch event {
       case .removeIfNeed:
-        properties.actionSubject.send(.popFieldIfNeed)
-      case .newTagAdded:
+        guard !properties.currentTags.isEmpty else { return }
+        properties.currentTags.removeLast()
+        properties.actionSubject.send(.popField)
+      case let .newTagAdded(tag):
+        properties.currentTags.append(tag)
         properties.actionSubject.send(.insertEmptyField)
     }
   }

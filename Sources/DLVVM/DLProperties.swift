@@ -13,10 +13,8 @@ public typealias DLProperties = DevinLaiProperties
 public protocol DLPropertiesViewModel: DLViewModel {
   associatedtype Properties: DevinLaiProperties where Properties.ViewModel == Self
 
-  associatedtype ViewObservation
-
   var properties: Properties { get }
-  var observation: ViewObservation { get }
+
   var subscriptions: Set<AnyCancellable> { get set }
 }
 

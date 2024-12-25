@@ -6,11 +6,12 @@
 //
 
 import SwiftUI
+import Combine
 
 public typealias DLUIView = DevinLaiUIView
 
 public protocol DevinLaiUIView: UIView {
-  associatedtype ViewModel: DLPropertiesViewModel
+  associatedtype ViewModel: DLViewModel
 
   var viewModel: ViewModel { get }
 
@@ -24,7 +25,7 @@ public protocol DevinLaiUIView: UIView {
 
 public typealias DefaultDLUIView = DefaultDevinLaiUIView
 
-open class DefaultDevinLaiUIView<ViewModel: DLPropertiesViewModel>: UIView, DLUIView {
+open class DefaultDevinLaiUIView<ViewModel: DLViewModel>: UIView, DLUIView {
   public var observation: ViewModel.ViewObservation
 
   public let viewModel: ViewModel

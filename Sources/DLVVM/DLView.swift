@@ -6,7 +6,7 @@ import SwiftUI
 public typealias DLView = DevinLaiView
 
 public protocol DevinLaiView: View {
-  associatedtype ViewModel: DLPropertiesViewModel
+  associatedtype ViewModel: DLViewModel
 
   var viewModel: ViewModel { get }
 

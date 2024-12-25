@@ -8,10 +8,12 @@
 import Foundation
 
 
-public struct CoordinatorView<T: DestinationCase>: DLView {
+public struct CoordinatorView<ViewModel: DLCoordinatorViewModel>: DLView {
+  @Environment(\.dismiss) var dismiss
+
   @State public var observation: ViewModel.ViewObservation
 
-  public let viewModel: DefaultCoordinatorViewModel<T>
+  public let viewModel: ViewModel
 
   public init(viewModel: ViewModel) {
     self.viewModel = viewModel
@@ -23,7 +25,7 @@ public struct CoordinatorView<T: DestinationCase>: DLView {
       path: $observation.path
     ) {
       viewModel.buildView(for: observation.root)
-        .navigationDestination(for: T.self) {
+        .navigationDestination(for: ViewModel.T.self) {
           viewModel.buildView(for: $0)
         }
     }
@@ -32,6 +34,9 @@ public struct CoordinatorView<T: DestinationCase>: DLView {
     }
     .fullScreenCover(item: $observation.fullScreenCover) {
       viewModel.buildView(for: $0)
+    }
+    .onReceive(observation.onDismissSubject) { _ in
+      dismiss()
     }
   }
 }

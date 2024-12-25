@@ -24,8 +24,8 @@ public final class TagsFieldViewModel: DLReducibleViewModel {
 
   public var subscriptions = Set<AnyCancellable>()
 
-  public init() {
-    properties = Properties()
+  public init(placeholder: String?, defaultTags: [String] = []) {
+    properties = Properties(placeholder: placeholder, defaultTags: defaultTags)
     setUpSubscriptions()
   }
 
@@ -36,11 +36,17 @@ public final class TagsFieldViewModel: DLReducibleViewModel {
         switch action {
           case .insertEmptyField:
             observation.tagViewModels.append(makeTagViewModel())
-          case .popFieldIfNeed:
-            guard observation.tagViewModels.count > 1 else { return }
+
+          case .popField:
             observation.tagViewModels.removeLast()
             observation.tagViewModels.last?.manipulate(.enableEditing)
         }
+      }
+      .store(in: &subscriptions)
+
+    properties.$currentTags
+      .sink { [eventSubject] in
+        eventSubject.send(.tagsUpdated($0))
       }
       .store(in: &subscriptions)
   }
@@ -50,7 +56,7 @@ public final class TagsFieldViewModel: DLReducibleViewModel {
 
 extension TagsFieldViewModel: DLEventPublisher {
   public enum Event {
-
+    case tagsUpdated([String])
   }
 }
 
@@ -65,14 +71,13 @@ extension TagsFieldViewModel {
   }
 
   private func makeViewObservation() -> ViewObservation {
-    ViewObservation(tagViewModels: [
-      makeTagViewModel()
-    ])
+    let tagModels = properties.currentTags.map { makeTagViewModel($0) }
+    return ViewObservation(tagViewModels: tagModels + [makeTagViewModel()])
   }
 
   private func makeTagViewModel(_ text: String? = nil) -> TagViewViewModel {
     makeSubViewModel {
-      TagViewViewModel()
+      TagViewViewModel(placeholder: properties.placeholder, tag: text)
     } convertAction: { .tagEventReceived($0) }
   }
 }

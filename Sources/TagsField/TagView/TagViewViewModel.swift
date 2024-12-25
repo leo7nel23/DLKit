@@ -15,7 +15,7 @@ public final class TagViewViewModel: DLReducibleViewModel, Identifiable {
 
   public typealias Reducer = TagViewReducer
 
-  public let id: String = { UUID().uuidString }()
+  public let id: String = UUID().uuidString
 
   private let eventSubject = PassthroughSubject<Event, Never>()
   public var eventPublisher: AnyPublisher<Event, Never> { eventSubject.eraseToAnyPublisher() }
@@ -26,8 +26,8 @@ public final class TagViewViewModel: DLReducibleViewModel, Identifiable {
 
   public var subscriptions = Set<AnyCancellable>()
 
-  init(defaultText: String = "") {
-    properties = Properties(defaultText: defaultText)
+  init(placeholder: String? = nil, tag: String?) {
+    properties = Properties(placeholder: placeholder, text: tag)
     setUpSubscriptions()
   }
 
@@ -40,7 +40,7 @@ public final class TagViewViewModel: DLReducibleViewModel, Identifiable {
           case .updateStateToTag:
             observation.isAbleToEdit = false
             observation.isFocused = false
-            eventSubject.send(.newTagAdded)
+            eventSubject.send(.newTagAdded(observation.tag))
           case .updateStateToField:
             observation.isAbleToEdit = true
             observation.isFocused = true
@@ -56,7 +56,7 @@ public final class TagViewViewModel: DLReducibleViewModel, Identifiable {
 
 extension TagViewViewModel: DLEventPublisher {
   public enum Event {
-    case newTagAdded
+    case newTagAdded(String)
     case removeIfNeed
   }
 }
@@ -74,19 +74,24 @@ public extension TagViewViewModel {
 extension TagViewViewModel {
   @Observable
   public class ViewObservation {
+    let placeholder: String
     var tag: String = ""
     var isAbleToEdit = true
     var isFocused = true
 
-    init(tag: String, isAbleToEdit: Bool = true, isFocused: Bool = true) {
+    init(
+      placeholder: String?,
+      tag: String
+    ) {
+      self.placeholder = placeholder ?? ""
       self.tag = tag
-      self.isAbleToEdit = isAbleToEdit
-      self.isFocused = isFocused
+      self.isAbleToEdit = tag.isEmpty
+      self.isFocused = tag.isEmpty
     }
   }
 
   private func makeViewObservation() -> ViewObservation {
-    ViewObservation(tag: properties.currentText)
+    ViewObservation(placeholder: properties.placeholder, tag: properties.currentText)
   }
 }
 

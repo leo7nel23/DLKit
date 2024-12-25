@@ -25,8 +25,10 @@ struct TagViewView: DLView {
   }
 
   var body: some View {
-    TextField("Tags", text: $observation.tag)
+    TextField(observation.isAbleToEdit ? observation.placeholder : "", text: $observation.tag)
       .focused($isFocused)
+      .font(.body)
+      .multilineTextAlignment(.center)
       .padding(.horizontal, isFocused || observation.tag.isEmpty ? 0 : 10)
       .padding(.vertical, 10)
       .background(observation.isAbleToEdit ? .clear : Color.white)
@@ -51,5 +53,5 @@ struct TagViewView: DLView {
 }
 
 #Preview {
-  TagViewView(viewModel: .init())
+  TagViewView(viewModel: .init(placeholder: "symbol", tag: "QQQ"))
 }
