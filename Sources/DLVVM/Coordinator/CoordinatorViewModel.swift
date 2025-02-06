@@ -9,89 +9,126 @@
 
 import Combine
 
-public protocol DestinationCase: Hashable & Identifiable {}
+class DLCoordinatorableViewModel: Hashable, Identifiable, CustomStringConvertible {
+    var description: String { "\(modelType) at \(address)" }
+    let id: String
 
-public struct CoordinatorConfiguration<T> {
-  let rootDestination: T
-  let autoHideNavigationBar: Bool
+    let viewModel: DLViewModel
+    let modelType: String
+    let address: String
 
-  public init(rootDestination: T, autoHideNavigationBar: Bool) {
-    self.rootDestination = rootDestination
-    self.autoHideNavigationBar = autoHideNavigationBar
-  }
-}
+    init(viewModel: DLViewModel) {
+        self.viewModel = viewModel
+        self.modelType = String(describing: type(of: viewModel).self)
+        self.address = "\(Unmanaged<AnyObject>.passUnretained(viewModel).toOpaque())"
 
-public typealias DLCoordinatorViewModel = DevinLaiCoordinatorViewModel
+        if let viewModel = viewModel as? (any Identifiable) {
+            self.id = "\(viewModel.id)"
+        } else {
+            self.id = "\(modelType) at \(address)"
+        }
+    }
 
-public protocol DevinLaiCoordinatorViewModel: DLViewModel where ViewObservation: DefaultCoordinatorObservation<T> {
-  associatedtype T: DestinationCase
+    static func == (lhs: DLCoordinatorableViewModel, rhs: DLCoordinatorableViewModel) -> Bool {
+        let lhsType = type(of: lhs.viewModel)
+        let rhsType = type(of: rhs.viewModel)
+        guard  lhsType == rhsType else { return false }
 
-  func push(_ destination: T)
-  func presentSheet(_ destination: T)
-  func presentFullScreenCover(_ destination: T)
-  func pop()
-  func popToRoot()
-  func dismiss()
-  func dismissSheet()
-  func dismissFullScreenOver()
-  func view(for destination: T) -> any View
+        return lhs.hashValue == rhs.hashValue
+    }
 
-  var observation: ViewObservation { get }
+    func hash(into hasher: inout Hasher) {
+        if let hashable = viewModel as? (any Hashable) {
+            hasher.combine(hashable)
+        } else {
+            hasher.combine(modelType)
+            hasher.combine(address)
+        }
+    }
 }
 
 @Observable
-open class DefaultCoordinatorObservation<Destination: DestinationCase> {
-  var path: [Destination] = []
-  var sheet: Destination?
-  var fullScreenCover: Destination?
-  var root: Destination
-  var onDismissSubject = PassthroughSubject<Void, Never>()
+public class DLCoordinatorViewModel: DLViewModel {
+    var path: [DLCoordinatorableViewModel] = []
+    var root: DLCoordinatorableViewModel
+    var sheet: DLCoordinatorableViewModel?
+    var fullScreenCover: DLCoordinatorableViewModel?
 
-  public init(root: Destination) {
-    self.root = root
-  }
-}
+    @ObservationIgnored
+    var onDismissSubject = PassthroughSubject<Void, Never>()
 
-public extension DevinLaiCoordinatorViewModel {
-  func push(_ destination: T) {
-    observation.path.append(destination)
-  }
+    @ObservationIgnored
+    var result: Any?
 
-  func presentSheet(_ destination: T) {
-    observation.sheet = destination
-  }
+    let viewBuilder: (DLViewModel) -> any View
+    let callback: CoordinatorCallback<Any?>?
 
-  func presentFullScreenCover(_ destination: T) {
-    observation.fullScreenCover = destination
-  }
-
-  func pop() {
-    guard !observation.path.isEmpty else { return }
-    observation.path.removeLast()
-  }
-
-  func popToRoot() {
-    observation.path.removeLast(observation.path.count)
-  }
-
-  func dismiss() {
-    observation.onDismissSubject.send()
-  }
-
-  func dismissSheet() {
-    observation.sheet = nil
-  }
-
-  func dismissFullScreenOver() {
-    observation.fullScreenCover = nil
-  }
-
-  func buildView(for destination: T) -> AnyView {
-    let view = view(for: destination)
-    if let view = view as? any DLView,
-       let viewModel = view.viewModel as? (any DLCoordinatable) {
-      viewModel.set(coordinator: self)
+    public init(
+        rootViewModel: DLViewModel,
+        viewBuilder: @escaping (DLViewModel) -> any View,
+        callback: CoordinatorCallback<Any?>? = nil
+    ) {
+        self.root = DLCoordinatorableViewModel(viewModel: rootViewModel)
+        self.viewBuilder = viewBuilder
+        self.callback = callback
     }
-    return AnyView(view)
-  }
+
+    public func push(_ viewModel: DLViewModel) {
+        path.append(DLCoordinatorableViewModel(viewModel: viewModel))
+    }
+
+    public func presentSheet(_ viewModel: DLViewModel) {
+        sheet = DLCoordinatorableViewModel(viewModel: viewModel)
+    }
+
+    public func presentFullScreenCover(_ viewModel: DLViewModel) {
+        fullScreenCover = DLCoordinatorableViewModel(viewModel: viewModel)
+    }
+
+    public func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
+    }
+
+    public func popToRoot() {
+        path.removeLast(path.count)
+    }
+
+    public func dismissSheet() {
+        sheet = nil
+    }
+
+    public func dismissFullScreenOver() {
+        fullScreenCover = nil
+    }
+
+    public func dismiss(runCallback: Bool = true) {
+        if runCallback {
+            callback?.run(result)
+        }
+        onDismissSubject.send()
+    }
+
+    public func update(result: Any?) {
+        self.result = result
+    }
+
+    func buildView(for hashableViewModel: DLCoordinatorableViewModel) -> AnyView {
+        func setCoordinator(viewModel: DLViewModel) {
+            if let viewModel = viewModel as? (any DLReducibleViewModel) {
+                viewModel.coordinator = self
+            }
+        }
+
+        let view: any View = {
+            if let coordinatorViewModel = hashableViewModel.viewModel as? DLCoordinatorViewModel {
+                setCoordinator(viewModel: coordinatorViewModel.root.viewModel)
+                return CoordinatorView(viewModel: coordinatorViewModel)
+            } else {
+                setCoordinator(viewModel: hashableViewModel.viewModel)
+                return viewBuilder(hashableViewModel.viewModel)
+            }
+        }()
+        return AnyView(view)
+    }
 }

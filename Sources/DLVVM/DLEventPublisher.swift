@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  DLEventPublisher.swift
 //  
 //
 //  Created by 賴柏宏 on 2024/7/30.
@@ -16,10 +16,10 @@ public protocol DevinLaiEventPublisher {
     var eventPublisher: AnyPublisher<Event, Never> { get }
 }
 
-extension DevinLaiEventPublisher where Self: DLPropertiesViewModel {
+extension DLEventPublisher where Self: DLReducibleViewModel {
 
-    public var eventPublisher: AnyPublisher<Event, Never> { properties.eventPublisher }
+    public var eventPublisher: AnyPublisher<Event, Never> { eventSubject.eraseToAnyPublisher() }
 
-    public func fireEvent(_ event: Event) { properties.fireEvent(event) }
+    public func fireEvent(_ event: Event) { eventSubject.send(event) }
 
 }

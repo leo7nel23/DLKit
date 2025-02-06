@@ -1,16 +1,22 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
+//
+//  DLView.swift
+//  DLKit
+//
+//  Created by 賴柏宏 on 2025/2/4.
+//
 
 import SwiftUI
 
-public typealias DLView = DevinLaiView
-
-public protocol DevinLaiView: View {
+public protocol DLView: View {
   associatedtype ViewModel: DLViewModel
 
   var viewModel: ViewModel { get }
 
-  var observation: ViewModel.ViewObservation { get }
-
   init(viewModel: ViewModel)
+}
+
+public extension DLView where ViewModel: DLViewAction {
+    func send(_ viewAction: ViewModel.ViewAction) {
+        viewModel.reduce(viewAction)
+    }
 }

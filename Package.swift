@@ -13,20 +13,16 @@ let package = Package(
             targets: ["DLVVM"]
         ),
         .library(
-          name: "FlowLayout",
-          targets: ["FlowLayout"]
+            name: "FlowLayout",
+            targets: ["FlowLayout"]
         ),
         .library(
-          name: "TagsField",
-          targets: ["TagsField"]
+            name: "SwiftUIKit",
+            targets: ["SwiftUIKit"]
         ),
         .library(
-          name: "SwiftUIKit",
-          targets: ["SwiftUIKit"]
-        ),
-        .library(
-          name: "Utils",
-          targets: ["Utils"]
+            name: "Utils",
+            targets: ["Utils"]
         )
     ],
     dependencies: [
@@ -38,25 +34,13 @@ let package = Package(
             name: "DLVVM"
         ),
         .target(
-          name: "FlowLayout"
+            name: "FlowLayout"
         ),
         .target(
-          name: "TagsField",
-          dependencies: [
-            .Flow,
-            .DLVVM
-          ]
+            name: "SwiftUIKit"
         ),
         .target(
-          name: "SwiftUIKit"
-        ),
-        .target(
-          name: "Utils"
+            name: "Utils"
         )
     ]
 )
-
-extension Target.Dependency {
-  static let DLVVM = Target.Dependency.targetItem(name: "DLVVM", condition: nil)
-  static let Flow = Target.Dependency.targetItem(name: "FlowLayout", condition: nil)
-}
