@@ -37,7 +37,7 @@ public extension Array where Element == Double {
     let xMean = self.average()
     let yMean = y.average()
 
-    var sum:Double = 0
+    var sum: Double = 0
 
     for (index, xElement) in self.enumerated() {
       let yElement = y[index]

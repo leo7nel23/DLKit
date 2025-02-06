@@ -37,7 +37,11 @@ let package = Package(
             name: "FlowLayout"
         ),
         .target(
-            name: "SwiftUIKit"
+            name: "SwiftUIKit",
+            dependencies: [
+                "DLVVM",
+                "FlowLayout"
+            ]
         ),
         .target(
             name: "Utils"
