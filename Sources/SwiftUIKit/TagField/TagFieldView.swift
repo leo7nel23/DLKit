@@ -33,9 +33,11 @@ public struct TagFieldView: DLView {
         )
         .background(.gray.opacity(0.07))
         .onTapGesture {
-            isFocused = !isFocused
+            isFocused = true
         }
-        .onReceive(viewModel.disableFocusSubject) { isFocused = !$0 }
+        .onReceive(viewModel.disableFocusSubject) {
+            isFocused = !$0
+        }
     }
 
     @ViewBuilder

@@ -98,6 +98,7 @@ public enum TagFieldFeature: DLReducer {
     static func reduce(state: State, with manipulation: ViewModel.Manipulation) {
         switch manipulation {
             case let .updateTags(tags):
+                guard tags != state.tags else { return }
                 state.tags = tags
                 state.actionSubject.send(.cleanNewTag)
                 state.actionSubject.send(.disableFocus)
