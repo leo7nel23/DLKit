@@ -66,7 +66,11 @@ public class DLCoordinatorViewModel: DLViewModel {
         self.root = root
         self.viewBuilder = viewBuilder
         self.callback = callback
-        self.manager = NavigationManager(rootViewModel: root, viewBuilder: viewBuilder)
+        self.manager = NavigationManager(
+            rootViewModel: root,
+            id: id,
+            viewBuilder: viewBuilder
+        )
     }
 
     public func push(_ viewModel: DLViewModel) {

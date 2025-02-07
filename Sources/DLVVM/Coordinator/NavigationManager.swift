@@ -32,9 +32,11 @@ class NavigationManager {
 
     init(
         rootViewModel: DLCoordinatorableViewModel,
+        id: String,
         viewBuilder: @escaping CoordinatorViewBuilder
     ) {
         self.root = rootViewModel
+        self.coordinators = [id]
         self.viewBuilders = [viewBuilder]
     }
 
