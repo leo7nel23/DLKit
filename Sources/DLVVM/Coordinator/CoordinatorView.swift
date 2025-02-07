@@ -19,20 +19,20 @@ public struct CoordinatorView: DLView {
 
     public var body: some View {
         NavigationStack(
-            path: $viewModel.path
+            path: $viewModel.manager.path
         ) {
-            viewModel.buildView(for: viewModel.root)
+            viewModel.buildView(for: viewModel.manager.root)
                 .navigationDestination(for: DLCoordinatorableViewModel.self) {
                     viewModel.buildView(for: $0)
                 }
         }
-        .sheet(item: $viewModel.sheet) {
+        .sheet(item: $viewModel.manager.sheet) {
             viewModel.buildView(for: $0)
         }
-        .fullScreenCover(item: $viewModel.fullScreenCover) {
+        .fullScreenCover(item: $viewModel.manager.fullScreenCover) {
             viewModel.buildView(for: $0)
         }
-        .onReceive(viewModel.onDismissSubject) { _ in
+        .onReceive(viewModel.manager.onDismissSubject) { _ in
             dismiss()
         }
     }

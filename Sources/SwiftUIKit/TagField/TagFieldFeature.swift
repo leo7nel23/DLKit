@@ -87,7 +87,7 @@ public enum TagFieldFeature: DLReducer {
             state.actionSubject.send(.enableFocus)
         }
         var newTag = tag
-        if newTag.last == " " {
+        if newTag.last == " " || newTag.last == "," {
             newTag.removeLast()
             commit(newTag: newTag)
         } else if isEnded {

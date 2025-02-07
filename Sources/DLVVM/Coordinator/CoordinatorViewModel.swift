@@ -47,86 +47,91 @@ class DLCoordinatorableViewModel: Hashable, Identifiable, CustomStringConvertibl
     }
 }
 
-@Observable
 public class DLCoordinatorViewModel: DLViewModel {
-    var path: [DLCoordinatorableViewModel] = []
+    var manager: NavigationManager
+    let id: String = UUID().uuidString
     var root: DLCoordinatorableViewModel
-    var sheet: DLCoordinatorableViewModel?
-    var fullScreenCover: DLCoordinatorableViewModel?
-
-    @ObservationIgnored
-    var onDismissSubject = PassthroughSubject<Void, Never>()
-
-    @ObservationIgnored
     var result: Any?
 
-    let viewBuilder: (DLViewModel) -> any View
+    let viewBuilder: CoordinatorViewBuilder
     let callback: CoordinatorCallback<Any?>?
 
     public init(
         rootViewModel: DLViewModel,
-        viewBuilder: @escaping (DLViewModel) -> any View,
-        callback: CoordinatorCallback<Any?>? = nil
+        viewBuilder: @escaping CoordinatorViewBuilder,
+        callback: CoordinatorCallback<Any?>? = nil,
+        autoHideNavigationBar: Bool = true
     ) {
-        self.root = DLCoordinatorableViewModel(viewModel: rootViewModel)
+        let root =  DLCoordinatorableViewModel(viewModel: rootViewModel)
+        self.root = root
         self.viewBuilder = viewBuilder
         self.callback = callback
+        self.manager = NavigationManager(rootViewModel: root, viewBuilder: viewBuilder)
     }
 
     public func push(_ viewModel: DLViewModel) {
-        path.append(DLCoordinatorableViewModel(viewModel: viewModel))
+        if let coordinatorViewModel = viewModel as? DLCoordinatorViewModel {
+            setCoordinator(viewModel: coordinatorViewModel.root.viewModel)
+            manager.createNewPath(
+                for: coordinatorViewModel.id,
+                with: coordinatorViewModel.root,
+                viewBuilder: coordinatorViewModel.viewBuilder
+            )
+            coordinatorViewModel.manager = manager
+        } else {
+            manager.push(DLCoordinatorableViewModel(viewModel: viewModel))
+        }
     }
 
     public func presentSheet(_ viewModel: DLViewModel) {
-        sheet = DLCoordinatorableViewModel(viewModel: viewModel)
+        manager.sheet = DLCoordinatorableViewModel(viewModel: viewModel)
     }
 
     public func presentFullScreenCover(_ viewModel: DLViewModel) {
-        fullScreenCover = DLCoordinatorableViewModel(viewModel: viewModel)
+        manager.fullScreenCover = DLCoordinatorableViewModel(viewModel: viewModel)
     }
 
     public func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
+        manager.pop()
     }
 
     public func popToRoot() {
-        path.removeLast(path.count)
+        manager.popToRoot()
     }
 
     public func dismissSheet() {
-        sheet = nil
+        manager.sheet = nil
     }
 
     public func dismissFullScreenOver() {
-        fullScreenCover = nil
+        manager.fullScreenCover = nil
     }
 
     public func dismiss(runCallback: Bool = true) {
         if runCallback {
             callback?.run(result)
         }
-        onDismissSubject.send()
+        manager.dismiss()
     }
 
     public func update(result: Any?) {
         self.result = result
     }
 
-    func buildView(for hashableViewModel: DLCoordinatorableViewModel) -> AnyView {
-        func setCoordinator(viewModel: DLViewModel) {
-            if let viewModel = viewModel as? (any DLReducibleViewModel) {
-                viewModel.coordinator = self
-            }
+    private func setCoordinator(viewModel: DLViewModel) {
+        if let viewModel = viewModel as? (any DLReducibleViewModel) {
+            viewModel.coordinator = self
         }
+    }
 
+    func buildView(for hashableViewModel: DLCoordinatorableViewModel) -> AnyView {
         let view: any View = {
             if let coordinatorViewModel = hashableViewModel.viewModel as? DLCoordinatorViewModel {
-                setCoordinator(viewModel: coordinatorViewModel.root.viewModel)
+                setCoordinator(viewModel: coordinatorViewModel.manager.root.viewModel)
                 return CoordinatorView(viewModel: coordinatorViewModel)
             } else {
                 setCoordinator(viewModel: hashableViewModel.viewModel)
-                return viewBuilder(hashableViewModel.viewModel)
+                return manager.buildView(for: hashableViewModel)
             }
         }()
         return AnyView(view)
