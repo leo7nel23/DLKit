@@ -12,12 +12,10 @@ import DLVVM
 // MARK: - TagFieldViewModel
 
 @Observable
-public final class TagFieldViewModel: DLReducibleViewModel {
+public final class TagFieldViewModel: ContainedViewModel {
     public typealias Reducer = TagFieldFeature
 
     public var state: State
-
-    public var coordinator: DLCoordinatorViewModel?
 
     public var subscriptions = Set<AnyCancellable>()
 
@@ -64,13 +62,13 @@ public final class TagFieldViewModel: DLReducibleViewModel {
     var newTag: String = ""
 }
 
-extension TagFieldViewModel: DLEventPublisher {
+extension TagFieldViewModel: EventPublisher {
     public enum Event {
         case tagUpdated([String])
     }
 }
 
-extension TagFieldViewModel: DLManipulation {
+extension TagFieldViewModel: ExternallyMutable {
     public enum Manipulation {
         case updateTags([String])
     }
@@ -80,14 +78,14 @@ extension TagFieldViewModel: DLManipulation {
     }
 }
 
-extension TagFieldViewModel: DLViewAction {
+extension TagFieldViewModel: ViewActionHandler {
     public enum ViewAction {
         case removeTapped(String)
         case newTagUpdated(String)
         case newTagSubmitted(String)
     }
 
-    public func reduce(_ viewAction: ViewAction) {
-        Reducer.reduce(state: state, with: viewAction)
+    public func handleViewAction(_ action: ViewAction) {
+        Reducer.reduce(state: state, with: action)
     }
 }

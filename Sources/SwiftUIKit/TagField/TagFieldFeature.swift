@@ -14,7 +14,7 @@ import Foundation
 // MARK: - TagFieldViewModel.Properties
 
 public extension TagFieldViewModel {
-    final class State: DLState {
+    final class State: BusinessState {
         public typealias ViewModel = TagFieldViewModel
 
         fileprivate let actionSubject = PassthroughSubject<Action, Never>()
@@ -41,7 +41,7 @@ public extension TagFieldViewModel {
 
 // MARK: - TagFieldFeature
 
-public enum TagFieldFeature: DLReducer {
+public enum TagFieldFeature: BusinessReducer {
     public typealias ViewModel = TagFieldViewModel
     public typealias State = ViewModel.State
 

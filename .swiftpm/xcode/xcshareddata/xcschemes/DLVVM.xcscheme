@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "DLVVM2"
-               BuildableName = "DLVVM2"
-               BlueprintName = "DLVVM2"
+               BlueprintIdentifier = "DLVVM"
+               BuildableName = "DLVVM"
+               BlueprintName = "DLVVM"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -50,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "DLVVM2"
-            BuildableName = "DLVVM2"
-            BlueprintName = "DLVVM2"
+            BlueprintIdentifier = "DLVVM"
+            BuildableName = "DLVVM"
+            BlueprintName = "DLVVM"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>

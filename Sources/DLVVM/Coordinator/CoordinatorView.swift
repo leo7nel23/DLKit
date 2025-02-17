@@ -8,32 +8,38 @@
 import Foundation
 import SwiftUI
 
-public struct CoordinatorView: DLView {
-    @Environment(\.dismiss) var dismiss
+public typealias CoordinatorView = DLVVM.CoordinatorView
 
-    @State public var viewModel: DLCoordinatorViewModel
+// MARK: - DLVVM.CoordinatorView
 
-    public init(viewModel: ViewModel) {
-        self.viewModel = viewModel
-    }
+public extension DLVVM {
+    struct CoordinatorView: DLView {
+        @Environment(\.dismiss) var dismiss
 
-    public var body: some View {
-        NavigationStack(
-            path: $viewModel.manager.path
-        ) {
-            viewModel.buildView(for: viewModel.manager.root)
-                .navigationDestination(for: DLCoordinatorableViewModel.self) {
-                    viewModel.buildView(for: $0)
-                }
+        @State public var viewModel: CoordinatorViewModel
+
+        public init(viewModel: ViewModel) {
+            self.viewModel = viewModel
         }
-        .sheet(item: $viewModel.manager.sheet) {
-            viewModel.buildView(for: $0)
-        }
-        .fullScreenCover(item: $viewModel.manager.fullScreenCover) {
-            viewModel.buildView(for: $0)
-        }
-        .onReceive(viewModel.manager.onDismissSubject) { _ in
-            dismiss()
+
+        public var body: some View {
+            NavigationStack(
+                path: $viewModel.manager.path
+            ) {
+                viewModel.buildView(for: viewModel.manager.root)
+                    .navigationDestination(for: CoordinatorableViewModel.self) {
+                        viewModel.buildView(for: $0)
+                    }
+            }
+            .sheet(item: $viewModel.manager.sheet) {
+                viewModel.buildView(for: $0)
+            }
+            .fullScreenCover(item: $viewModel.manager.fullScreenCover) {
+                viewModel.buildView(for: $0)
+            }
+            .onReceive(viewModel.manager.onDismissSubject) { _ in
+                dismiss()
+            }
         }
     }
 }

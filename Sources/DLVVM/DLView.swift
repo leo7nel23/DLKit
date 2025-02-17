@@ -7,16 +7,22 @@
 
 import SwiftUI
 
-public protocol DLView: View {
-  associatedtype ViewModel: DLViewModel
+public typealias DLView = DLVVM.DLView
 
-  var viewModel: ViewModel { get }
+// MARK: - DLVVM.DLView
 
-  init(viewModel: ViewModel)
+public extension DLVVM {
+    protocol DLView: View {
+        associatedtype ViewModel: DLViewModel
+
+        var viewModel: ViewModel { get }
+
+        init(viewModel: ViewModel)
+    }
 }
 
-public extension DLView where ViewModel: DLViewAction {
+public extension DLView where ViewModel: ViewActionHandler {
     func send(_ viewAction: ViewModel.ViewAction) {
-        viewModel.reduce(viewAction)
+        viewModel.handleViewAction(viewAction)
     }
 }
