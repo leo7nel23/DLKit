@@ -10,7 +10,6 @@ import Foundation
 public typealias BusinessState = DLVVM.BusinessState
 
 public extension DLVVM {
-    @MainActor
     protocol BusinessState {
         associatedtype ViewModel: DLViewModel
     }

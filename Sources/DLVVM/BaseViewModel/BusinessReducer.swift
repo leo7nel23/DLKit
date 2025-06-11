@@ -10,9 +10,8 @@ import Foundation
 public typealias BusinessReducer = DLVVM.BusinessReducer
 
 public extension DLVVM {
-    @MainActor
     protocol BusinessReducer {
-        associatedtype ViewModel: ReducerViewModel
+        associatedtype ViewModel: DLViewModel
         associatedtype Action
 
         typealias State = ViewModel.State

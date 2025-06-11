@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  NavigationManager.swift
 //  DLKit
 //
 //  Created by 賴柏宏 on 2025/2/7.
@@ -7,17 +7,16 @@
 
 import Foundation
 
-public typealias CoordinatorViewBuilder = (DLViewModel) -> (any View)?
+public typealias CoordinatorViewBuilder = (any DLViewModel) -> (any View)?
 
-public extension CoordinatorView {
-    @MainActor
+public extension DLNavigationView {
     @Observable
     class NavigationManager {
         @ObservationIgnored
         private var isUserPop = false
 
         @ObservationIgnored
-        private var paths: [[CoordinatorableViewModel]] = [[]] {
+        private var paths: [[NavigatorInfo]] = [[]] {
             didSet {
                 if !isUserPop {
                     path = paths.flatMap { $0 }
@@ -26,16 +25,17 @@ public extension CoordinatorView {
                 }
             }
         }
-        var path: [CoordinatorableViewModel] = [] {
+        var path: [NavigatorInfo] = [] {
             didSet {
                 if path.count < oldValue.count { // user pop
                     syncBackToPaths()
                 }
             }
         }
-        var root: CoordinatorableViewModel
-        var sheet: CoordinatorableViewModel?
-        var fullScreenCover: CoordinatorableViewModel?
+        var root: NavigatorInfo
+        var sheet: NavigatorInfo?
+        var fullScreenCover: NavigatorInfo?
+        var alert: AlertViewModel?
 
         @ObservationIgnored
         var onDismissSubject = PassthroughSubject<Void, Never>()
@@ -45,7 +45,7 @@ public extension CoordinatorView {
         private var coordinators: [String] = []
 
         init(
-            rootViewModel: CoordinatorableViewModel,
+            rootViewModel: NavigatorInfo,
             id: String,
             viewBuilder: @escaping CoordinatorViewBuilder
         ) {
@@ -56,7 +56,7 @@ public extension CoordinatorView {
 
         func syncBackToPaths() {
             var targetCount = path.count
-            let newPaths = paths.enumerated().compactMap { (index, subPath) -> [CoordinatorableViewModel]? in
+            let newPaths = paths.enumerated().compactMap { (index, subPath) -> [NavigatorInfo]? in
                 if targetCount == 0 {
                     return index == 0 ? [] : nil
                 } else if subPath.count > targetCount {
@@ -76,7 +76,7 @@ public extension CoordinatorView {
 
         func createNewPath(
             for id: String,
-            with root: CoordinatorableViewModel,
+            with root: NavigatorInfo,
             viewBuilder: @escaping CoordinatorViewBuilder
         ) {
             guard !coordinators.contains(id) else { return }
@@ -85,10 +85,14 @@ public extension CoordinatorView {
             coordinators.append(id)
         }
 
-        func push(_ viewModel: CoordinatorableViewModel) {
+        func push(_ viewModel: NavigatorInfo) {
             let lastIndex = paths.count - 1
             guard lastIndex >= 0 else { return }
             paths[lastIndex].append(viewModel)
+        }
+
+        func alert(_ viewModel: AlertViewModel) {
+            alert = viewModel
         }
 
         func pop() {
@@ -126,7 +130,7 @@ public extension CoordinatorView {
             }
         }
 
-        func buildView(for hashableViewModel: CoordinatorableViewModel) -> AnyView {
+        func buildView(for hashableViewModel: NavigatorInfo) -> AnyView {
             for builder in viewBuilders {
                 if let view = builder(hashableViewModel.viewModel) {
                     return AnyView(view)

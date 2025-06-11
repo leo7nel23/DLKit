@@ -1,5 +1,5 @@
 //
-//  ViewModel.swift
+//  DLViewModel.swift
 //  DLKit
 //
 //  Created by 賴柏宏 on 2025/2/4.
@@ -9,14 +9,10 @@ import Foundation
 import Combine
 
 public typealias DLViewModel = DLVVM.DLViewModel
-public typealias ReducerViewModel = DLVVM.ReducerViewModel
 
 public extension DLVVM {
-    protocol DLViewModel: AnyObject {
-    }
-
     @MainActor
-    protocol ReducerViewModel: DLViewModel {
+    protocol DLViewModel: AnyObject {
         associatedtype State: BusinessState where State.ViewModel == Self
         associatedtype Reducer: BusinessReducer where Reducer.ViewModel == Self
 
@@ -24,10 +20,9 @@ public extension DLVVM {
 
         var subscriptions: Set<AnyCancellable> { get set }
     }
-
 }
 
-public extension ReducerViewModel {
+public extension DLViewModel {
 
     func reduce(_ action: Reducer.Action) {
         Reducer.reduce(state: state, action: action)
@@ -54,7 +49,7 @@ public extension ReducerViewModel {
 
 nonisolated(unsafe) fileprivate var eventSubjectAssociatedKey: Void?
 
-extension ReducerViewModel where Self: EventPublisher {
+extension DLViewModel where Self: EventPublisher {
 
     var eventSubject: PassthroughSubject<Event, Never> {
         if let subject = objc_getAssociatedObject(self, &eventSubjectAssociatedKey) as? PassthroughSubject<Event, Never> {
