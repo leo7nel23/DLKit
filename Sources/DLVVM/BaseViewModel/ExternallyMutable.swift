@@ -10,6 +10,7 @@ import Foundation
 public typealias ExternallyMutable = DLVVM.ExternallyMutable
 
 public extension DLVVM {
+    @MainActor
     protocol ExternallyMutable {
         associatedtype Manipulation
         

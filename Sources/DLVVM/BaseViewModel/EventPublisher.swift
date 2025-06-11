@@ -11,13 +11,13 @@ import Combine
 public typealias EventPublisher = DLVVM.EventPublisher
 
 public extension DLVVM {
+    @MainActor
     protocol EventPublisher {
         associatedtype Event
         var eventPublisher: AnyPublisher<Event, Never> { get }
     }
 }
 
-@MainActor
 public extension EventPublisher where Self: DLViewModel {
 
     var eventPublisher: AnyPublisher<Event, Never> { eventSubject.eraseToAnyPublisher() }

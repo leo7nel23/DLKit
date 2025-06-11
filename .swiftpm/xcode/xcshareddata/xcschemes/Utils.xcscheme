@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SwiftUIKit"
-               BuildableName = "SwiftUIKit"
-               BlueprintName = "SwiftUIKit"
+               BlueprintIdentifier = "Utils"
+               BuildableName = "Utils"
+               BlueprintName = "Utils"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -50,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "SwiftUIKit"
-            BuildableName = "SwiftUIKit"
-            BlueprintName = "SwiftUIKit"
+            BlueprintIdentifier = "Utils"
+            BuildableName = "Utils"
+            BlueprintName = "Utils"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>

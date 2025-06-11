@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SwiftUIKit"
-               BuildableName = "SwiftUIKit"
-               BlueprintName = "SwiftUIKit"
+               BlueprintIdentifier = "FlowLayout"
+               BuildableName = "FlowLayout"
+               BlueprintName = "FlowLayout"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -50,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "SwiftUIKit"
-            BuildableName = "SwiftUIKit"
-            BlueprintName = "SwiftUIKit"
+            BlueprintIdentifier = "FlowLayout"
+            BuildableName = "FlowLayout"
+            BlueprintName = "FlowLayout"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>
