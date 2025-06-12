@@ -12,56 +12,55 @@ public typealias DLViewModel = DLVVM.DLViewModel
 
 public extension DLVVM {
     @MainActor
+    @dynamicMemberLookup
     protocol DLViewModel: AnyObject {
-        associatedtype State: BusinessState where State.ViewModel == Self
-        associatedtype Reducer: BusinessReducer where Reducer.ViewModel == Self
+        associatedtype State: BusinessState
+        associatedtype Action
+        associatedtype Reducer: BusinessReducer where Reducer.State == State, Reducer.Action == Action
 
         var state: State { get set }
 
+        init(initialState: State)
+
         var subscriptions: Set<AnyCancellable> { get set }
+
+        subscript<Value>(dynamicMember keyPath: KeyPath<State, Value>) -> Value { get }
     }
 }
 
-public extension DLViewModel {
-
-    func reduce(_ action: Reducer.Action) {
-        Reducer.reduce(state: &state, action: action)
+public extension DLVVM.DLViewModel {
+    func send(_ action: Action) {
+        Reducer.reduce(into: &state, action: action)
     }
+    
+    subscript<Value>(dynamicMember keyPath: KeyPath<State, Value>) -> Value {
+        state[keyPath: keyPath]
+    }
+}
 
-    func makeSubViewModel<T: DLViewModel & EventPublisher>(
-        _ maker: () -> T,
-        convertAction: @escaping (T.Event) -> Reducer.Action?
-    ) -> T {
-        let viewModel: T = maker()
-
-        viewModel.eventPublisher
+public extension DLVVM.DLViewModel {
+    func scope<Child: DLViewModel & EventPublisher>(
+        state: WritableKeyPath<State, Child.State>,
+        mapEvent: @escaping (Child.Event) -> Action?
+    ) -> Child {
+        let childVM = Child(initialState: self.state[keyPath: state])
+        childVM.eventPublisher
             .sink { [weak self] event in
                 guard let self,
-                      let action = convertAction(event)
+                      let action = mapEvent(event)
                 else { return }
-                self.reduce(action)
+                self.send(action)
             }
             .store(in: &subscriptions)
 
-        return viewModel
+        return childVM
     }
 }
 
-nonisolated(unsafe) fileprivate var eventSubjectAssociatedKey: Void?
-
-extension DLViewModel where Self: EventPublisher {
-
-    var eventSubject: PassthroughSubject<Event, Never> {
-        if let subject = objc_getAssociatedObject(self, &eventSubjectAssociatedKey) as? PassthroughSubject<Event, Never> {
-            return subject
-        } else {
-            let subject = PassthroughSubject<Event, Never>()
-            objc_setAssociatedObject(self, &eventSubjectAssociatedKey, subject, .OBJC_ASSOCIATION_RETAIN)
-            return subject
-        }
-    }
-
+public extension DLVVM.DLViewModel where Self: EventPublisher, State.ViewModel == Self {
     var eventPublisher: AnyPublisher<Event, Never> {
-        eventSubject.eraseToAnyPublisher()
+        state.eventSubject.eraseToAnyPublisher()
     }
+
+    func fireEvent(_ event: Event) { state.fireEvent(event) }
 }

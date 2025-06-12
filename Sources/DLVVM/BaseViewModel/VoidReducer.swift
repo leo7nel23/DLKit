@@ -11,7 +11,5 @@ public final class VoidReducer<ViewModel: DLViewModel>: BusinessReducer {
 
     public typealias Action = Void
 
-    public static func reduce(state: inout ViewModel.State, action: Void) {
-
-    }
+    public static func reduce(into state: inout VoidState<ViewModel>, action: Void) {}
 }

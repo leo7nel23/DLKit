@@ -11,11 +11,15 @@ public typealias BusinessReducer = DLVVM.BusinessReducer
 
 public extension DLVVM {
     protocol BusinessReducer {
-        associatedtype ViewModel: DLViewModel
+        associatedtype State: BusinessState
         associatedtype Action
 
-        typealias State = ViewModel.State
+        static func reduce(into state: inout State, action: Action)
+    }
+}
 
-        static func reduce(state: inout State, action: Action)
+public extension DLVVM.BusinessReducer where State.ViewModel: (DLViewModel & EventPublisher) {
+    static func fireEvent(_ event: State.ViewModel.Event, with state: State) {
+        state.eventSubject.send(event)
     }
 }

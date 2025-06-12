@@ -13,11 +13,30 @@ public typealias DLNavigationViewModel = DLNavigationView.NavigationViewModel
 
 // MARK: - DLVVM.NavigationViewModel
 public extension DLNavigationView {
+    enum NavigationReducer: BusinessReducer {
+        public class State: BusinessState {
+            public typealias ViewModel = NavigationViewModel
+
+            let rootViewModel: any DLViewModel
+            let viewBuilder: CoordinatorViewBuilder
+
+            init(
+                rootViewModel: any DLViewModel,
+                viewBuilder: @escaping CoordinatorViewBuilder
+            ) {
+                self.rootViewModel = rootViewModel
+                self.viewBuilder = viewBuilder
+            }
+        }
+
+        public typealias Action = Void
+        public static func reduce(into state: inout State, action: Void) {}
+    }
     @MainActor
     final class NavigationViewModel: DLViewModel {
-        public var state = VoidState<NavigationViewModel>()
-
-        public typealias Reducer = VoidReducer<NavigationViewModel>
+        public var state: NavigationReducer.State
+        
+        public typealias Reducer = NavigationReducer
 
         let id: String = UUID().uuidString
 
@@ -31,17 +50,27 @@ public extension DLNavigationView {
 
         private let viewBuilder: CoordinatorViewBuilder
 
-        public init(
-            rootViewModel: any DLViewModel,
-            viewBuilder: @escaping CoordinatorViewBuilder
-        ) {
-            let root = NavigatorInfo(viewModel: rootViewModel)
+        public init(initialState: NavigationReducer.State) {
+            self.state = initialState
+            let root = NavigatorInfo(viewModel: initialState.rootViewModel)
             self.root = root
-            self.viewBuilder = viewBuilder
+            self.viewBuilder = initialState.viewBuilder
             manager = NavigationManager(
                 rootViewModel: root,
                 id: id,
                 viewBuilder: viewBuilder
+            )
+        }
+
+        public convenience init(
+            rootViewModel: any DLViewModel,
+            viewBuilder: @escaping CoordinatorViewBuilder
+        ) {
+            self.init(
+                initialState: NavigationReducer.State(
+                    rootViewModel: rootViewModel,
+                    viewBuilder: viewBuilder
+                )
             )
         }
 
