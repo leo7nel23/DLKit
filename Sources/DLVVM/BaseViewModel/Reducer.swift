@@ -14,8 +14,9 @@ public extension DLVVM {
         associatedtype State: BusinessState
         associatedtype Action
 
-        static func reduce(into state: inout State, action: Action)
+        static func reduce(into state: inout State, action: Action) -> Effect<Action>
     }
+    
 }
 
 public extension DLVVM.BusinessReducer where State.ViewModel: (DLViewModel & EventPublisher) {

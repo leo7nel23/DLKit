@@ -30,7 +30,7 @@ public extension DLNavigationView {
         }
 
         public typealias Action = Void
-        public static func reduce(into state: inout State, action: Void) {}
+        public static func reduce(into state: inout State, action: Void) -> DLVVM.Effect<Action> { .none }
     }
     @MainActor
     final class NavigationViewModel: DLViewModel {
