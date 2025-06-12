@@ -16,6 +16,6 @@ public extension DLVVM {
 
         typealias State = ViewModel.State
 
-        static func reduce(state: State, action: Action)
+        static func reduce(state: inout State, action: Action)
     }
 }

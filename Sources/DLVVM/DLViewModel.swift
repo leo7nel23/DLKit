@@ -25,7 +25,7 @@ public extension DLVVM {
 public extension DLViewModel {
 
     func reduce(_ action: Reducer.Action) {
-        Reducer.reduce(state: state, action: action)
+        Reducer.reduce(state: &state, action: action)
     }
 
     func makeSubViewModel<T: DLViewModel & EventPublisher>(
