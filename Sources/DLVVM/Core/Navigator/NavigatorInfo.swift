@@ -12,31 +12,31 @@ struct NavigatorInfo: Hashable, Identifiable {
     
     let id: String
 
-    let viewModel: any DLViewModel
+    let state: any BusinessState
     let modelType: String
     let address: String
 
-    init(viewModel: any DLViewModel) {
-        if let id = (viewModel as? (any Identifiable))?.id as? String {
+    init(state: any BusinessState) {
+        if let id = (state as? (any Identifiable))?.id as? String {
             self.id = id
         } else {
             self.id = UUID().uuidString
         }
-        self.viewModel = viewModel
-        self.modelType = String(describing: type(of: viewModel).self)
-        self.address = "\(Unmanaged<AnyObject>.passUnretained(viewModel).toOpaque())"
+        self.state = state
+        self.modelType = String(describing: type(of: state).self)
+        self.address = "\(Unmanaged<AnyObject>.passUnretained(state).toOpaque())"
     }
 
     static func == (lhs: NavigatorInfo, rhs: NavigatorInfo) -> Bool {
-        let lhsType = type(of: lhs.viewModel)
-        let rhsType = type(of: rhs.viewModel)
+        let lhsType = type(of: lhs.state)
+        let rhsType = type(of: rhs.state)
         guard  lhsType == rhsType else { return false }
 
         return lhs.hashValue == rhs.hashValue
     }
 
     func hash(into hasher: inout Hasher) {
-        if let hashable = viewModel as? (any Hashable) {
+        if let hashable = state as? (any Hashable) {
             hasher.combine(hashable)
         } else {
             hasher.combine(modelType)

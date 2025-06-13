@@ -14,9 +14,8 @@ public extension DLVVM {
     protocol Coordinator {
         associatedtype Destination
 
-        var navigationViewModel: DLNavigationViewModel { get }
+        var navigator: Navigator { get }
 
-        @MainActor
         func requestTo(_ destination: Destination)
     }
 }

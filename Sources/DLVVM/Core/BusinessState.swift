@@ -11,21 +11,21 @@ public typealias BusinessState = DLVVM.BusinessState
 
 public extension DLVVM {
     protocol BusinessState: AnyObject {
-        associatedtype ViewModel: DLViewModel
+        associatedtype R: Reducer where R.State == Self
     }
 }
 
 nonisolated(unsafe) private var eventSubjectAssociatedKey: Void?
 
-extension DLVVM.BusinessState where ViewModel: EventPublisher {
-    var eventSubject: PassthroughSubject<ViewModel.Event, Never> {
+extension DLVVM.BusinessState {
+    var eventSubject: PassthroughSubject<R.Event, Never> {
         if let subject = objc_getAssociatedObject(
             self,
             &eventSubjectAssociatedKey
-        ) as? PassthroughSubject<ViewModel.Event, Never> {
+        ) as? PassthroughSubject<R.Event, Never> {
             return subject
         } else {
-            let subject = PassthroughSubject<ViewModel.Event, Never>()
+            let subject = PassthroughSubject<R.Event, Never>()
             objc_setAssociatedObject(
                 self,
                 &eventSubjectAssociatedKey,
@@ -36,11 +36,11 @@ extension DLVVM.BusinessState where ViewModel: EventPublisher {
         }
     }
 
-    var eventPublisher: AnyPublisher<ViewModel.Event, Never> {
+    var eventPublisher: AnyPublisher<R.Event, Never> {
         eventSubject.eraseToAnyPublisher()
     }
 
-    internal func fireEvent(_ event: ViewModel.Event) {
+    internal func fireEvent(_ event: R.Event) {
         eventSubject.send(event)
     }
 }

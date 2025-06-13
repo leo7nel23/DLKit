@@ -16,9 +16,9 @@ public extension DLVVM {
     struct DLNavigationView: DLView {
         @Environment(\.dismiss) var dismiss
 
-        @State public var viewModel: NavigationViewModel
+        @State public var viewModel: Navigator
 
-        public init(viewModel: ViewModel) {
+        public init(viewModel: Navigator) {
             self.viewModel = viewModel
         }
 
@@ -26,16 +26,16 @@ public extension DLVVM {
             NavigationStack(
                 path: $viewModel.manager.path
             ) {
-                viewModel.buildView(for: viewModel.manager.root)
+                viewModel.state.buildView(for: viewModel.manager.root)
                     .navigationDestination(for: NavigatorInfo.self) {
-                        viewModel.buildView(for: $0)
+                        viewModel.state.buildView(for: $0)
                     }
             }
             .sheet(item: $viewModel.manager.sheet) {
-                viewModel.buildView(for: $0)
+                viewModel.state.buildView(for: $0)
             }
             .fullScreenCover(item: $viewModel.manager.fullScreenCover) {
-                viewModel.buildView(for: $0)
+                viewModel.state.buildView(for: $0)
             }
             .onReceive(viewModel.manager.onDismissSubject) { _ in
                 dismiss()

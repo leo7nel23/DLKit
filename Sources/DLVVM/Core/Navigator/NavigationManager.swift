@@ -7,7 +7,7 @@
 
 import Foundation
 
-public typealias CoordinatorViewBuilder = (any DLViewModel) -> (any View)?
+public typealias CoordinatorViewBuilder = (any BusinessState) -> (any View)?
 
 public extension DLNavigationView {
     @Observable
@@ -45,11 +45,11 @@ public extension DLNavigationView {
         private var coordinators: [String] = []
 
         init(
-            rootViewModel: NavigatorInfo,
+            rootInfo: NavigatorInfo,
             id: String,
             viewBuilder: @escaping CoordinatorViewBuilder
         ) {
-            self.root = rootViewModel
+            self.root = rootInfo
             self.coordinators = [id]
             self.viewBuilders = [viewBuilder]
         }
@@ -132,7 +132,7 @@ public extension DLNavigationView {
 
         func buildView(for hashableViewModel: NavigatorInfo) -> AnyView {
             for builder in viewBuilders {
-                if let view = builder(hashableViewModel.viewModel) {
+                if let view = builder(hashableViewModel.state) {
                     return AnyView(view)
                 }
             }
