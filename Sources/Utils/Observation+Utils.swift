@@ -9,6 +9,9 @@ import Combine
 import Foundation
 import Observation
 
+/*
+// MARK: - ObservationPublisher
+
 /// 讓 `@Observable` 屬性可以轉換為 `ObservationPublisher`
 struct ObservationPublisher<Object: Observable, Value>: Publisher {
     typealias Output = Value
@@ -29,8 +32,8 @@ struct ObservationPublisher<Object: Observable, Value>: Publisher {
     }
 }
 
+// MARK: - ObservationSubscription
 final class ObservationSubscription<Object: Observable, Value, S: Subscriber>: @unchecked Sendable, Subscription where S.Input == Value, S.Failure == Never {
-
     private var subscriber: S?
     private let object: Object
     private let keyPath: KeyPath<Object, Value>
@@ -42,7 +45,7 @@ final class ObservationSubscription<Object: Observable, Value, S: Subscriber>: @
         startObserving()
     }
 
-    func request(_ demand: Subscribers.Demand) {
+    func request(_: Subscribers.Demand) {
         // 由於是主動推送資料，這裡不需要額外邏輯
     }
 
@@ -54,9 +57,8 @@ final class ObservationSubscription<Object: Observable, Value, S: Subscriber>: @
         withObservationTracking {
             let newValue = object[keyPath: keyPath]
             _ = subscriber?.receive(newValue)
-        } onChange: { [weak self] in
-//            guard let self else { return }
-            DispatchQueue.main.async {
+        } onChange: { @Sendable [weak self] in
+            DispatchQueue.main.async { [weak self] in
                 self?.startObserving()
             }
         }
@@ -69,3 +71,4 @@ public extension Observable {
             .eraseToAnyPublisher()
     }
 }
+*/
