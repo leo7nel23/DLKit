@@ -21,7 +21,7 @@ public extension Navigator {
     ) -> DLViewModel<BizStata> {
         let viewModel = _scope(
             state: state,
-            event: { _ in nil },
+            event: nil, // as coordinator root view, you should only connect with navigator
             reducer: reducer,
             cacheKey: "Root"
         )
@@ -68,7 +68,6 @@ public extension Navigator {
             reducer: nextReducer,
             cacheKey: key
         ) // next will direct to past action now
-
         // 建立 presented & navigator 的 route 關係
         bindRouter(viewModel: nextViewModel)
         navigatableKeyPaths[nextViewModel.id] = { [pastViewModel] in
@@ -86,6 +85,14 @@ public extension Navigator {
         let from = String(describing: BizState.self.R) + fromAddress
         let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque()))"
         let to = String(describing: type(of: self.state).R) + toAddress
+
+        viewModel.navigatorEventPublisher
+            .print("⤴️ [Nav Event]: \(from) -> \(to)")
+            .sink { [weak self] in
+                self?.send(.subEvent($0))
+            }
+            .store(in: &subscription)
+
 
         viewModel.routePublisher
             .print("⤴️ [Router]: \(from) -> \(to)")
@@ -211,6 +218,7 @@ public extension Navigator {
 public extension DLVVM {
     final class NavigationState: NavigatableState, @unchecked Sendable, Identifiable {
         public typealias R = NavigationReducer
+        public typealias NavigatorEvent = Void
 
         public let id: String = UUID().uuidString
 
@@ -221,14 +229,18 @@ public extension DLVVM {
 
         let stateTypeList: [any NavigatableState.Type]
 
+        public let eventHandler: ((Any) -> Any?)?
+
         public init(
             stateTypeList: [any NavigatableState.Type],
-            viewBuilder: @escaping CoordinatorViewBuilder
+            viewBuilder: @escaping CoordinatorViewBuilder,
+            eventHandler: ((Any) -> Any?)? = nil
         ) {
             var list = stateTypeList
             list.append(NavigationState.self)
             self.stateTypeList = list
             self.viewBuilder = viewBuilder
+            self.eventHandler = eventHandler
         }
 
         func setUp(rootViewModel: any DLViewModelProtocol) {
@@ -257,7 +269,7 @@ public extension DLVVM {
 
     final class NavigationReducer: Reducer {
         public typealias State = NavigationState
-        public typealias Event = Void
+        public typealias Event = Any
 
         public enum Action {
             case push(any DLViewModelProtocol)
@@ -269,6 +281,7 @@ public extension DLVVM {
             case dismissFullScreenOver
             case dismiss
             case alert(title: String, message: String)
+            case subEvent(Any)
         }
 
         public init() {}
@@ -313,6 +326,11 @@ public extension DLVVM {
 
             case .dismiss:
                 state.manager.dismiss()
+
+            case let .subEvent(event):
+                if let result = state.eventHandler?(event) {
+                    fireEvent(result, with: state)
+                }
 
             case .alert:
                 break

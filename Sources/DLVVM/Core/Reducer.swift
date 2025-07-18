@@ -45,17 +45,23 @@ public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
         )
     }
 
-    func route<ChildState: NavigationState, RootState: NavigatableState>(
+    func route<ChildState: NavigationState, RootState: NavigatableState, Output>(
         childState keyPath: WritableKeyPath<State, ChildState?>,
         container: AnyNavigatableStateContainer<RootState>,
-        to mapper: @escaping (ChildState.R.Event) -> Action?,
+        to mapper: @escaping (Output) -> Action?,
         routeStyle: RouteStyle,
         with state: State
     ) {
         state.routeSubject.send(
             NavigationStateKeyPath(
                 keyPath: keyPath,
-                eventMapper: mapper,
+                eventMapper: {
+                    if let action = $0 as? Output {
+                        mapper(action)
+                    } else {
+                        nil
+                    }
+                },
                 rootState: container.state,
                 rootReducer: container.reducer,
                 routeStyle: routeStyle
@@ -70,6 +76,10 @@ public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
 
     func pop(with state: State) {
         state.dismiss(.pop)
+    }
+
+    func fireNavigatorEvent(_ event: State.NavigatorEvent, with state: State) {
+        state.fireNavigatorEvent(event)
     }
 }
 

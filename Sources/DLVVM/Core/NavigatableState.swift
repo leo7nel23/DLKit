@@ -149,10 +149,9 @@ public typealias NavigatableState = DLVVM.NavigatableState
 
 public extension DLVVM {
     protocol NavigatableState: BusinessState {
-//        associatedtype Destination
+        associatedtype NavigatorEvent
     }
 }
-
 
 nonisolated(unsafe) private var routeInfoSubjectAssociatedKey: Void?
 
@@ -220,5 +219,36 @@ extension DLVVM.NavigatableState {
 
     internal func dismiss(_ type: DismissType) {
         routeDismissSubject.send(type)
+    }
+}
+
+
+nonisolated(unsafe) private var navigatorEventSubjectAssociatedKey: Void?
+
+extension DLVVM.NavigatableState {
+    private var navigatorEventSubject: PassthroughSubject<NavigatorEvent, Never> {
+        if let subject = objc_getAssociatedObject(
+            self,
+            &navigatorEventSubjectAssociatedKey
+        ) as? PassthroughSubject<NavigatorEvent, Never> {
+            return subject
+        } else {
+            let subject = PassthroughSubject<NavigatorEvent, Never>()
+            objc_setAssociatedObject(
+                self,
+                &navigatorEventSubjectAssociatedKey,
+                subject,
+                .OBJC_ASSOCIATION_RETAIN
+            )
+            return subject
+        }
+    }
+
+    var navigatorEventPublisher: AnyPublisher<NavigatorEvent, Never> {
+        navigatorEventSubject.eraseToAnyPublisher()
+    }
+
+    func fireNavigatorEvent(_ event: NavigatorEvent) {
+        navigatorEventSubject.send(event)
     }
 }

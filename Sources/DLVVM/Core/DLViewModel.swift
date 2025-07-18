@@ -111,7 +111,7 @@ public extension DLVVM {
 
         internal func _scope<ChildState: BusinessState>(
             state: ChildState,
-            event toParentAction: @escaping (ChildState.R.Event) -> State.R.Action?,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action?)?,
             reducer childReducer: ChildState.R,
             cacheKey: String
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
@@ -121,18 +121,21 @@ public extension DLVVM {
                 reducer: childReducer
             )
 
-            let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(state).toOpaque()))"
-            let from = String(describing: ChildState.self.R) + fromAddress
-            let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque()))"
-            let to = String(describing: type(of: self.state).R) + toAddress
+            if type(of: state).R.Event != Void.self {
+                let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(state).toOpaque()))"
+                let from = String(describing: ChildState.self.R) + fromAddress
+                let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque()))"
+                let to = String(describing: type(of: self.state).R) + toAddress
 
-            childViewModel.eventPublisher
-                .print("↖️ [Event]: \(from) -> \(to)")
-                .compactMap { toParentAction($0) }
-                .sink { [weak self] parentAction in
-                    self?.send(parentAction)
-                }
-                .store(in: &subscription)
+                childViewModel.eventPublisher
+                    .print("↖️ [Event]: \(from) -> \(to)")
+                    .compactMap { toParentAction?($0) }
+                    .sink { [weak self] parentAction in
+                        self?.send(parentAction)
+                    }
+                    .store(in: &subscription)
+            }
+
             // 儲存到快取
             childViewModels[cacheKey] = childViewModel
 
