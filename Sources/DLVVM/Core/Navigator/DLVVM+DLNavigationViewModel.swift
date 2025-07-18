@@ -10,3 +10,6 @@
 // - DLVVM+NavigationState.swift
 // - DLVVM+NavigationReducer.swift
 // - DLVVM+NavigatorExtensions.swift
+
+public typealias DLNavigationViewModel = DLNavigatorViewModel
+public typealias DLNavigatorViewModel = DLViewModel<NavigationFlow>

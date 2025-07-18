@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 
 public typealias DLNavigationView = DLVVM.DLNavigationView
+public typealias DLNavigatorView = DLVVM.DLNavigatorView
 
 // MARK: - DLVVM.NavigationView
 
@@ -85,4 +86,8 @@ public extension DLVVM {
             }
         }
     }
+    
+    // MARK: - DLNavigatorView
+    
+    typealias DLNavigatorView = DLNavigationView
 }
