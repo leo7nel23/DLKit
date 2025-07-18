@@ -1,17 +1,30 @@
 //
-//  NavigatableState.swift
+//  DLVVM+NavigationTypes.swift
 //  DLKit
 //
-//  Created by 賴柏宏 on 2025/7/15.
+//  Created by 賴柏宏 on 2025/7/18.
 //
 
 import Foundation
 
-public enum RouteStyle: Equatable {
-    case push
-    case fullScreenCover
-    case sheet
+public extension DLVVM {
+    enum RouteStyle: Equatable {
+        case push
+        case fullScreenCover
+        case sheet
+    }
+    
+    enum DismissType {
+        case dismiss
+        case pop
+        case popToRoot
+        case dismissSheet
+        case dismissFullCover
+    }
 }
+
+public typealias RouteStyle = DLVVM.RouteStyle
+public typealias DismissType = DLVVM.DismissType
 
 struct AnyNextStateKeyPath<State: NavigatableState, NextState: BusinessState> {
 
@@ -142,113 +155,4 @@ struct TypeErasedNextStateKeyPath<State: BusinessState> {
 struct NextStateMatcher<State: NavigatableState> {
     let type: any BusinessState.Type
     let match: (TypeErasedNextStateKeyPath<State>) -> Any?
-}
-
-public typealias NavigatableState = DLVVM.NavigatableState
-
-
-public extension DLVVM {
-    protocol NavigatableState: BusinessState {
-        associatedtype NavigatorEvent
-    }
-}
-
-nonisolated(unsafe) private var routeInfoSubjectAssociatedKey: Void?
-
-extension DLVVM.NavigatableState {
-    typealias RouteInfo = TypeErasedNextStateKeyPath<Self>
-    var routeSubject: PassthroughSubject<RouteInfo, Never> {
-        if let subject = objc_getAssociatedObject(
-            self,
-            &routeInfoSubjectAssociatedKey
-        ) as? PassthroughSubject<RouteInfo, Never> {
-            return subject
-        } else {
-            let subject = PassthroughSubject<RouteInfo, Never>()
-            objc_setAssociatedObject(
-                self,
-                &routeInfoSubjectAssociatedKey,
-                subject,
-                .OBJC_ASSOCIATION_RETAIN
-            )
-            return subject
-        }
-    }
-
-    var routePublisher: AnyPublisher<RouteInfo, Never> {
-        routeSubject.eraseToAnyPublisher()
-    }
-
-    internal func route(destination: RouteInfo) {
-        routeSubject.send(destination)
-    }
-}
-
-nonisolated(unsafe) private var routeDismissSubjectAssociatedKey: Void?
-
-enum DismissType {
-    case dismiss
-    case pop
-    case popToRoot
-    case dismissSheet
-    case dismissFullCover
-}
-
-extension DLVVM.NavigatableState {
-    private var routeDismissSubject: PassthroughSubject<DismissType, Never> {
-        if let subject = objc_getAssociatedObject(
-            self,
-            &routeDismissSubjectAssociatedKey
-        ) as? PassthroughSubject<DismissType, Never> {
-            return subject
-        } else {
-            let subject = PassthroughSubject<DismissType, Never>()
-            objc_setAssociatedObject(
-                self,
-                &routeDismissSubjectAssociatedKey,
-                subject,
-                .OBJC_ASSOCIATION_RETAIN
-            )
-            return subject
-        }
-    }
-
-    var routeDismissPublisher: AnyPublisher<DismissType, Never> {
-        routeDismissSubject.eraseToAnyPublisher()
-    }
-
-    internal func dismiss(_ type: DismissType) {
-        routeDismissSubject.send(type)
-    }
-}
-
-
-nonisolated(unsafe) private var navigatorEventSubjectAssociatedKey: Void?
-
-extension DLVVM.NavigatableState {
-    private var navigatorEventSubject: PassthroughSubject<NavigatorEvent, Never> {
-        if let subject = objc_getAssociatedObject(
-            self,
-            &navigatorEventSubjectAssociatedKey
-        ) as? PassthroughSubject<NavigatorEvent, Never> {
-            return subject
-        } else {
-            let subject = PassthroughSubject<NavigatorEvent, Never>()
-            objc_setAssociatedObject(
-                self,
-                &navigatorEventSubjectAssociatedKey,
-                subject,
-                .OBJC_ASSOCIATION_RETAIN
-            )
-            return subject
-        }
-    }
-
-    var navigatorEventPublisher: AnyPublisher<NavigatorEvent, Never> {
-        navigatorEventSubject.eraseToAnyPublisher()
-    }
-
-    func fireNavigatorEvent(_ event: NavigatorEvent) {
-        navigatorEventSubject.send(event)
-    }
 }

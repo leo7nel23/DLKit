@@ -19,11 +19,7 @@ extension DLVVM {
         let address: String
 
         init(viewModel: any DLViewModelProtocol) {
-            if let id = (viewModel as? (any Identifiable))?.id as? String {
-                self.id = id
-            } else {
-                self.id = UUID().uuidString
-            }
+            self.id = viewModel.id
             self.viewModel = viewModel
             self.modelType = String(describing: type(of: viewModel).self)
             self.address = "\(Unmanaged<AnyObject>.passUnretained(viewModel).toOpaque())"

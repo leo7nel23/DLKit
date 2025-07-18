@@ -1,16 +1,12 @@
 //
-//
-//  NavigationViewModel.swift
+//  DLVVM+NavigatorExtensions.swift
 //  DLKit
 //
-//  Created by 賴柏宏 on 2024/12/9.
-//
+//  Created by 賴柏宏 on 2025/7/18.
 //
 
 import Combine
 
-public typealias NavigationState = DLVVM.NavigationState
-public typealias NavigationReducer = DLVVM.NavigationReducer
 public typealias Navigator = DLViewModel<NavigationState>
 
 public extension Navigator {
@@ -210,133 +206,5 @@ public extension Navigator {
                 return nextViewModel
             }
         )
-    }
-}
-
-// MARK: - DLVVM.NavigationViewModel
-
-public extension DLVVM {
-    final class NavigationState: NavigatableState, @unchecked Sendable, Identifiable {
-        public typealias R = NavigationReducer
-        public typealias NavigatorEvent = Void
-
-        public let id: String = UUID().uuidString
-
-        let viewBuilder: CoordinatorViewBuilder
-
-        private(set) var rootInfo: NavigatorInfo!
-        var manager: NavigationManager!
-
-        let stateTypeList: [any NavigatableState.Type]
-
-        public let eventHandler: ((Any) -> Any?)?
-
-        public init(
-            stateTypeList: [any NavigatableState.Type],
-            viewBuilder: @escaping CoordinatorViewBuilder,
-            eventHandler: ((Any) -> Any?)? = nil
-        ) {
-            var list = stateTypeList
-            list.append(NavigationState.self)
-            self.stateTypeList = list
-            self.viewBuilder = viewBuilder
-            self.eventHandler = eventHandler
-        }
-
-        func setUp(rootViewModel: any DLViewModelProtocol) {
-            rootInfo = NavigatorInfo(viewModel: rootViewModel)
-            if manager == nil {
-                manager = NavigationManager(
-                    rootInfo: rootInfo,
-                    id: id,
-                    viewBuilder: viewBuilder
-                )
-            }
-        }
-
-        @MainActor
-        func buildView(for navigatorInfo: NavigatorInfo) -> AnyView {
-            let view: any View = {
-                if let navigator = navigatorInfo.viewModel as? Navigator {
-                    DLNavigationView(viewModel: navigator)
-                } else {
-                    manager.buildView(for: navigatorInfo)
-                }
-            }()
-            return AnyView(view)
-        }
-    }
-
-    final class NavigationReducer: Reducer {
-        public typealias State = NavigationState
-        public typealias Event = Any
-
-        public enum Action {
-            case push(any DLViewModelProtocol)
-            case presentSheet(any DLViewModelProtocol)
-            case presentFullScreenCover(any DLViewModelProtocol)
-            case pop
-            case popToRoot
-            case dismissSheet
-            case dismissFullScreenOver
-            case dismiss
-            case alert(title: String, message: String)
-            case subEvent(Any)
-        }
-
-        public init() {}
-
-        public func reduce(
-            into state: NavigationState,
-            action: Action
-        ) -> DLVVM.Procedure<Action, State> {
-            switch action {
-            case let .push(viewModel):
-                if let newState = viewModel.state as? NavigationState {
-                    state.manager.createNewPath(
-                        for: newState.id,
-                        with: newState.rootInfo,
-                        viewBuilder: newState.viewBuilder
-                    )
-                    newState.manager = state.manager
-                } else {
-                    let info = NavigatorInfo(viewModel: viewModel)
-                    state.manager.push(info)
-                }
-
-            case let .presentSheet(businessState):
-                let info = NavigatorInfo(viewModel: businessState)
-                state.manager.sheet = info
-
-            case let .presentFullScreenCover(businessState):
-                let info = NavigatorInfo(viewModel: businessState)
-                state.manager.fullScreenCover = info
-
-            case .pop:
-                state.manager.pop()
-
-            case .popToRoot:
-                state.manager.popToRoot()
-
-            case .dismissSheet:
-                state.manager.sheet = nil
-
-            case .dismissFullScreenOver:
-                state.manager.fullScreenCover = nil
-
-            case .dismiss:
-                state.manager.dismiss()
-
-            case let .subEvent(event):
-                if let result = state.eventHandler?(event) {
-                    fireEvent(result, with: state)
-                }
-
-            case .alert:
-                break
-            }
-
-            return .none
-        }
     }
 }

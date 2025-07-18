@@ -5,6 +5,8 @@
 //  Created by 賴柏宏 on 2025/6/12.
 //
 
+import SwiftUI
+
 @MainActor
 public struct Send<Action>: Sendable {
     let send: @MainActor @Sendable (Action) -> Void
