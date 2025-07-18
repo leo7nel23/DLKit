@@ -15,7 +15,7 @@ public typealias DLNavigationView = DLVVM.DLNavigationView
 public extension DLVVM {
     struct DLNavigationView: DLView {
         @Environment(\.dismiss) var dismiss
-        public typealias ReducerState = NavigationState
+        public typealias ReducerState = NavigationFlow
 
         @State public var viewModel: ViewModel
 
@@ -29,11 +29,11 @@ public extension DLVVM {
         public init<State: NavigatableState>(
             rootState: State,
             rootReducer: State.R,
-            navigationState: NavigationState
+            navigationState: NavigationFlow
         ) {
             self.viewModel = DLViewModel(
                 initialState: navigationState,
-                reducer: NavigationReducer()
+                reducer: NavigationFeature()
             )
             if navigationState.rootInfo == nil {
                 let rootViewModel = viewModel.bindRootView(state: rootState, reducer: rootReducer)

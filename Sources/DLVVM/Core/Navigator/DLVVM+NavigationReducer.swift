@@ -7,11 +7,11 @@
 
 import Foundation
 
-public typealias NavigationReducer = DLVVM.NavigationReducer
+public typealias NavigationFeature = DLVVM.NavigationFeature
 
 public extension DLVVM {
-    final class NavigationReducer: Reducer {
-        public typealias State = NavigationState
+    final class NavigationFeature: Reducer {
+        public typealias State = NavigationFlow
         public typealias Event = Any
 
         public enum Action {
@@ -30,12 +30,12 @@ public extension DLVVM {
         public init() {}
 
         public func reduce(
-            into state: NavigationState,
+            into state: NavigationFlow,
             action: Action
         ) -> DLVVM.Procedure<Action, State> {
             switch action {
             case let .push(viewModel):
-                if let newState = viewModel.state as? NavigationState {
+                if let newState = viewModel.state as? NavigationFlow {
                     state.manager.createNewPath(
                         for: newState.id,
                         with: newState.rootInfo,

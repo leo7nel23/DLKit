@@ -13,7 +13,7 @@ public typealias CoordinatorViewBuilder = (any DLViewModelProtocol) -> (any View
 
 public extension DLVVM {
     @Observable
-    class NavigationManager {
+    class Navigator {
         @ObservationIgnored
         private var isUserPop = false
 

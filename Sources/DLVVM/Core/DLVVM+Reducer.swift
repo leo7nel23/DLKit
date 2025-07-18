@@ -45,7 +45,7 @@ public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
         )
     }
 
-    func route<ChildState: NavigationState, RootState: NavigatableState, Output>(
+    func route<ChildState: NavigationFlow, RootState: NavigatableState, Output>(
         childState keyPath: WritableKeyPath<State, ChildState?>,
         container: AnyNavigatableStateContainer<RootState>,
         to mapper: @escaping (Output) -> Action?,

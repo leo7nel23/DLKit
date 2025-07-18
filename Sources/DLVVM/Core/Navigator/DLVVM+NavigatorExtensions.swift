@@ -7,7 +7,7 @@
 
 import Combine
 
-public typealias Navigator = DLViewModel<NavigationState>
+public typealias Navigator = DLViewModel<NavigationFlow>
 
 public extension Navigator {
     /// Binds a root view model to the navigation system
@@ -158,7 +158,7 @@ public extension Navigator {
 
     private func makeMatcher<PastState: NavigatableState, Next: NavigatableState>(
         from pastViewModel: DLViewModel<PastState>,
-        _ navigationViewModel: DLViewModel<NavigationState>? = nil,
+        _ navigationViewModel: DLViewModel<NavigationFlow>? = nil,
         _: Next.Type
     ) -> NextStateMatcher<PastState> {
         .init(

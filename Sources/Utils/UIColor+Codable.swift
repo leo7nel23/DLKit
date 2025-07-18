@@ -6,8 +6,11 @@
 //
 
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
 
+#if canImport(UIKit)
 public extension Decodable where Self: UIColor {
 
     init(from decoder: Decoder) throws {
@@ -29,3 +32,4 @@ public extension Encodable where Self: UIColor {
 }
 
 extension UIColor: Codable { }
+#endif

@@ -50,7 +50,7 @@ struct AnyNextStateKeyPath<State: NavigatableState, NextState: BusinessState> {
     }
 }
 
-struct NavigationStateKeyPath<State: NavigatableState, NextState: NavigationState, RootState: NavigatableState> {
+struct NavigationStateKeyPath<State: NavigatableState, NextState: NavigationFlow, RootState: NavigatableState> {
 
     let keyPath: WritableKeyPath<State, NextState?>
     let eventMapper: (NextState.R.Event) -> State.R.Action?
@@ -106,14 +106,14 @@ struct TypeErasedNextStateKeyPath<State: BusinessState> {
     }
 
     init<
-        NextState: NavigationState,
+        NextState: NavigationFlow,
         RootState: NavigatableState
     >(
         _ original: NavigationStateKeyPath<State, NextState, RootState>
     ) {
         self._keyPath = original.keyPath
         self._eventMapper = original.eventMapper
-        self._reducer = NavigationReducer()
+        self._reducer = NavigationFeature()
         self.routeStyle = original.routeStyle
         self.rootState = original.rootState
         self.rootReducer = original.rootReducer
@@ -147,8 +147,8 @@ struct TypeErasedNextStateKeyPath<State: BusinessState> {
     /// - Returns: A navigation state keypath if the types match, nil otherwise
     func navigationTyped<RootState: NavigatableState>(
         as rootType: RootState.Type
-    ) -> NavigationStateKeyPath<State, NavigationState, RootState>? {
-        guard let keyPath = _keyPath as? WritableKeyPath<State, NavigationState?>,
+    ) -> NavigationStateKeyPath<State, NavigationFlow, RootState>? {
+        guard let keyPath = _keyPath as? WritableKeyPath<State, NavigationFlow?>,
 //              let eventMapper = _eventMapper as? (RootState.R.Event) -> State.R.Action?,
               let rootState = rootState as? RootState,
               let rootReducer = rootReducer as? RootState.R else {
