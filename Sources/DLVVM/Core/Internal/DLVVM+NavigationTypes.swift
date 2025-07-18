@@ -77,8 +77,13 @@ struct NavigationStateKeyPath<State: NavigatableState, NextState: NavigationStat
     }
 }
 
+/// Type-erased wrapper for navigation state transitions
+/// 
+/// This struct enables storing different types of navigation keypaths in a uniform way,
+/// allowing for flexible navigation routing while maintaining type safety through
+/// runtime type checking.
 struct TypeErasedNextStateKeyPath<State: BusinessState> {
-    // 保存原始資料
+    // Store original data
     private let _keyPath: Any
     private let _eventMapper: Any
     private let _reducer: Any
@@ -87,7 +92,7 @@ struct TypeErasedNextStateKeyPath<State: BusinessState> {
     private let rootState: Any?
     private let rootReducer: Any?
 
-    // 建構函式
+    // Constructor functions
     init<NextState: BusinessState>(
         _ original: AnyNextStateKeyPath<State, NextState>
     ) {
@@ -114,7 +119,11 @@ struct TypeErasedNextStateKeyPath<State: BusinessState> {
         self.rootReducer = original.rootReducer
     }
 
-    // 轉換回具體型別
+    // Convert back to concrete type
+    /// Attempts to convert the type-erased keypath back to a concrete type
+    /// 
+    /// - Parameter nextType: The expected next state type
+    /// - Returns: A concrete keypath if the types match, nil otherwise
     func typed<NextState: BusinessState>(
         as nextType: NextState.Type
     ) -> AnyNextStateKeyPath<State, NextState>? {
@@ -132,6 +141,10 @@ struct TypeErasedNextStateKeyPath<State: BusinessState> {
         )
     }
 
+    /// Attempts to convert to a navigation state keypath
+    /// 
+    /// - Parameter rootType: The expected root state type
+    /// - Returns: A navigation state keypath if the types match, nil otherwise
     func navigationTyped<RootState: NavigatableState>(
         as rootType: RootState.Type
     ) -> NavigationStateKeyPath<State, NavigationState, RootState>? {

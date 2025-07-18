@@ -10,11 +10,20 @@ import Combine
 public typealias Navigator = DLViewModel<NavigationState>
 
 public extension Navigator {
+    /// Binds a root view model to the navigation system
+    /// 
+    /// This method creates a root view model and establishes the necessary navigation
+    /// bindings for routing and event handling.
+    /// 
+    /// - Parameters:
+    ///   - state: The root business state
+    ///   - reducer: The reducer for the root state
+    /// - Returns: A bound root view model
     @MainActor
-    func bindRootView<BizStata: NavigatableState>(
-        state: BizStata,
-        reducer: BizStata.R
-    ) -> DLViewModel<BizStata> {
+    func bindRootView<BizState: NavigatableState>(
+        state: BizState,
+        reducer: BizState.R
+    ) -> DLViewModel<BizState> {
         let viewModel = _scope(
             state: state,
             event: nil, // as coordinator root view, you should only connect with navigator
@@ -73,6 +82,12 @@ public extension Navigator {
         return nextViewModel
     }
 
+    /// Binds a view model to the navigation router
+    /// 
+    /// This method sets up the necessary publishers and subscriptions for handling
+    /// navigation events, route changes, and dismiss actions.
+    /// 
+    /// - Parameter viewModel: The view model to bind to the router
     private func bindRouter<BizState: NavigatableState>(
         viewModel: DLViewModel<BizState>
     ) {
@@ -121,6 +136,14 @@ public extension Navigator {
             .store(in: &subscription)
     }
 
+    /// Handles navigation presentation logic
+    /// 
+    /// This method processes navigation requests by matching them against registered
+    /// state types and executing the appropriate presentation logic.
+    /// 
+    /// - Parameters:
+    ///   - pastViewModel: The source view model initiating navigation
+    ///   - erased: Type-erased navigation information
     private func handlePresent<PastState: NavigatableState>(
         from pastViewModel: DLViewModel<PastState>,
         erased: TypeErasedNextStateKeyPath<PastState>

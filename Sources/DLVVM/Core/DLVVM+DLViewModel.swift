@@ -77,7 +77,7 @@ public extension DLVVM {
             }
         }
 
-        // 產生快取 key
+        // Generate cache key for child view model
         private func cacheKey<ChildState>(
             keyPath: WritableKeyPath<State, ChildState>,
             reducerType: Any.Type
@@ -87,9 +87,20 @@ public extension DLVVM {
             return "\(keyPathString)_\(reducerString)"
         }
 
-        // 使用 NSMapTable 來存儲弱引用的子 ViewModel
+        // Store child ViewModels with weak references using dictionary
         var childViewModels: [String: AnyObject] = [:]
 
+        /// Creates a scoped child view model from a keyPath on the parent state
+        /// 
+        /// This method creates a child view model that observes changes to a specific property
+        /// of the parent state. The child view model can send events back to the parent through
+        /// the provided event mapper.
+        /// 
+        /// - Parameters:
+        ///   - keyPath: The keyPath to the child state property
+        ///   - toParentAction: Maps child events to parent actions
+        ///   - childReducer: The reducer for the child state
+        /// - Returns: A scoped child view model
         public func scope<ChildState: BusinessState>(
             state keyPath: WritableKeyPath<State, ChildState>,
             event toParentAction: @escaping (ChildState.R.Event) -> State.R.Action?,
@@ -109,6 +120,17 @@ public extension DLVVM {
             )
         }
 
+        /// Internal method to create a scoped child view model
+        /// 
+        /// This is the core implementation that handles child view model creation,
+        /// event binding, and caching.
+        /// 
+        /// - Parameters:
+        ///   - state: The child state instance
+        ///   - toParentAction: Optional event mapper to parent actions
+        ///   - childReducer: The reducer for the child state
+        ///   - cacheKey: Unique key for caching the child view model
+        /// - Returns: A new or cached child view model
         internal func _scope<ChildState: BusinessState>(
             state: ChildState,
             event toParentAction: ((ChildState.R.Event) -> State.R.Action?)?,
@@ -136,7 +158,7 @@ public extension DLVVM {
                     .store(in: &subscription)
             }
 
-            // 儲存到快取
+            // Store in cache
             childViewModels[cacheKey] = childViewModel
 
             return childViewModel

@@ -78,7 +78,6 @@ public extension DLVVM {
                 let removedIds = removed.map { $0.viewModel.id }
                 guard !removedIds.isEmpty else { return }
                 viewModel.handleViewPopper(removedIds)
-//                print(removed.first?.viewModel.)
             }
             .onChange(of: viewModel.manager.fullScreenCover) { old, new in
                 guard let old, new != old else { return }

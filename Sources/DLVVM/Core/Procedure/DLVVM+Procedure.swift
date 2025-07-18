@@ -27,12 +27,21 @@ public extension DLVVM {
             self.operation = operation
         }
 
-        /// 沒有副作用
+        /// No side effects
         public static var none: Self {
             Self(operation: .none)
         }
 
-        /// 執行非同步任務
+        /// Execute asynchronous task with error handling
+        /// 
+        /// Creates a procedure that runs an asynchronous operation with automatic
+        /// error handling. Cancellation errors are silently ignored.
+        /// 
+        /// - Parameters:
+        ///   - priority: Optional task priority for execution
+        ///   - operation: The async operation to perform
+        ///   - handler: Optional error handler for non-cancellation errors
+        /// - Returns: A procedure that executes the async operation
         public static func run(
             priority: TaskPriority? = nil,
             operation: @escaping @Sendable (_ send: Send<Action>) async throws -> Void,
@@ -56,7 +65,13 @@ public extension DLVVM {
             )
         }
 
-        /// 合併多個 Procedure，同時執行
+        /// Merge multiple Procedures and execute concurrently
+        /// 
+        /// Creates a procedure that runs multiple procedures simultaneously using
+        /// structured concurrency (TaskGroup). All procedures execute in parallel.
+        /// 
+        /// - Parameter procedures: Variable number of procedures to merge
+        /// - Returns: A procedure that executes all input procedures concurrently
         public static func merge(_ procedures: Self...) -> Self {
             Self(operation: .run { send in
                 await withTaskGroup(of: Void.self) { group in
@@ -75,7 +90,13 @@ public extension DLVVM {
             })
         }
 
-        /// 依序執行多個 Procedure
+        /// Execute multiple Procedures sequentially
+        /// 
+        /// Creates a procedure that runs multiple procedures one after another in order.
+        /// Each procedure completes before the next one begins.
+        /// 
+        /// - Parameter procedures: Variable number of procedures to execute in sequence
+        /// - Returns: A procedure that executes all input procedures sequentially
         public static func sequence(_ procedures: Self...) -> Self {
             Self(operation: .run { send in
                 for procedure in procedures {
