@@ -7,40 +7,43 @@
 
 import Foundation
 
-struct NavigatorInfo: Hashable, Identifiable {
-    var description: String { "\(modelType) at \(address)" }
-    
-    let id: String
+extension DLVVM {
 
-    let state: any BusinessState
-    let modelType: String
-    let address: String
+    struct NavigatorInfo: Hashable, Identifiable {
+        var description: String { "\(modelType) at \(address)" }
 
-    init(state: any BusinessState) {
-        if let id = (state as? (any Identifiable))?.id as? String {
-            self.id = id
-        } else {
-            self.id = UUID().uuidString
+        let id: String
+
+        let viewModel: any DLViewModelProtocol
+        let modelType: String
+        let address: String
+
+        init(viewModel: any DLViewModelProtocol) {
+            if let id = (viewModel as? (any Identifiable))?.id as? String {
+                self.id = id
+            } else {
+                self.id = UUID().uuidString
+            }
+            self.viewModel = viewModel
+            self.modelType = String(describing: type(of: viewModel).self)
+            self.address = "\(Unmanaged<AnyObject>.passUnretained(viewModel).toOpaque())"
         }
-        self.state = state
-        self.modelType = String(describing: type(of: state).self)
-        self.address = "\(Unmanaged<AnyObject>.passUnretained(state).toOpaque())"
-    }
 
-    static func == (lhs: NavigatorInfo, rhs: NavigatorInfo) -> Bool {
-        let lhsType = type(of: lhs.state)
-        let rhsType = type(of: rhs.state)
-        guard  lhsType == rhsType else { return false }
+        static func == (lhs: NavigatorInfo, rhs: NavigatorInfo) -> Bool {
+            let lhsType = type(of: lhs.viewModel)
+            let rhsType = type(of: rhs.viewModel)
+            guard  lhsType == rhsType else { return false }
 
-        return lhs.hashValue == rhs.hashValue
-    }
+            return lhs.hashValue == rhs.hashValue
+        }
 
-    func hash(into hasher: inout Hasher) {
-        if let hashable = state as? (any Hashable) {
-            hasher.combine(hashable)
-        } else {
-            hasher.combine(modelType)
-            hasher.combine(address)
+        func hash(into hasher: inout Hasher) {
+            if let hashable = viewModel as? (any Hashable) {
+                hasher.combine(hashable)
+            } else {
+                hasher.combine(modelType)
+                hasher.combine(address)
+            }
         }
     }
 }

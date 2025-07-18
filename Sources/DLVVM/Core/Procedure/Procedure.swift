@@ -1,5 +1,5 @@
 //
-//  Effect.swift
+//  Procedure.swift
 //  DLKit
 //
 //  Created by 賴柏宏 on 2025/6/12.
@@ -7,12 +7,12 @@
 
 import Foundation
 
-public typealias Effect = DLVVM.Effect
+public typealias Procedure = DLVVM.Procedure
 
-// MARK: - DLVVM.Effect
+// MARK: - DLVVM.Procedure
 
 public extension DLVVM {
-    struct Effect<Action>: Sendable {
+    struct Procedure<Action, State>: Sendable where State: BusinessState {
         @usableFromInline
         enum Operation: Sendable {
             case none
@@ -56,14 +56,15 @@ public extension DLVVM {
             )
         }
 
-        /// 合併多個 Effect，同時執行
-        public static func merge(_ effects: Self...) -> Self {
+        /// 合併多個 Procedure，同時執行
+        public static func merge(_ procedures: Self...) -> Self {
             Self(operation: .run { send in
                 await withTaskGroup(of: Void.self) { group in
-                    for effect in effects {
-                        switch effect.operation {
+                    for procedure in procedures {
+                        switch procedure.operation {
                         case .none:
                             continue
+
                         case let .run(priority, operation):
                             group.addTask(priority: priority) {
                                 await operation(send)
@@ -74,11 +75,11 @@ public extension DLVVM {
             })
         }
 
-        /// 依序執行多個 Effect
-        public static func sequence(_ effects: Self...) -> Self {
+        /// 依序執行多個 Procedure
+        public static func sequence(_ procedures: Self...) -> Self {
             Self(operation: .run { send in
-                for effect in effects {
-                    switch effect.operation {
+                for procedure in procedures {
+                    switch procedure.operation {
                     case .none:
                         continue
 
@@ -87,16 +88,6 @@ public extension DLVVM {
                     }
                 }
             })
-        }
-
-        /// 串接兩個 Effect
-        public static func concatenate(_ first: Self, _ second: Self) -> Self {
-            sequence(first, second)
-        }
-
-        /// 使用運算子串接兩個 Effect
-        public static func + (lhs: Self, rhs: Self) -> Self {
-            concatenate(lhs, rhs)
         }
     }
 }

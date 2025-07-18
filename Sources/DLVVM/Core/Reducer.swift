@@ -15,13 +15,70 @@ public extension DLVVM {
         associatedtype Action
         associatedtype Event
 
-        func reduce(into state: State, action: Action) -> Effect<Action>
+        func reduce(into state: State, action: Action) -> Procedure<Action, State>
     }
-    
 }
 
 public extension DLVVM.Reducer where State.R == Self {
     func fireEvent(_ event: Event, with state: State) {
-        state.eventSubject.send(event)
+        state.fireEvent(event)
+    }
+}
+
+
+public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
+    func route<ChildState: BusinessState>(
+        childState keyPath: WritableKeyPath<State, ChildState?>,
+        to mapper: @escaping (ChildState.R.Event) -> Action?,
+        reducer: ChildState.R,
+        routeStyle: RouteStyle,
+        with state: State
+    ) {
+        state.routeSubject.send(
+            AnyNextStateKeyPath(
+                keyPath: keyPath,
+                eventMapper: mapper,
+                reducer: reducer,
+                routeStyle: routeStyle
+            )
+            .eraseToNextKeyPath()
+        )
+    }
+
+    func route<ChildState: NavigationState, RootState: NavigatableState>(
+        childState keyPath: WritableKeyPath<State, ChildState?>,
+        container: AnyNavigatableStateContainer<RootState>,
+        to mapper: @escaping (ChildState.R.Event) -> Action?,
+        routeStyle: RouteStyle,
+        with state: State
+    ) {
+        state.routeSubject.send(
+            NavigationStateKeyPath(
+                keyPath: keyPath,
+                eventMapper: mapper,
+                rootState: container.state,
+                rootReducer: container.reducer,
+                routeStyle: routeStyle
+            )
+            .eraseToNextKeyPath()
+        )
+    }
+
+    func dismiss(with state: State) {
+        state.dismiss(.dismiss)
+    }
+
+    func pop(with state: State) {
+        state.dismiss(.pop)
+    }
+}
+
+public struct AnyNavigatableStateContainer<State: NavigatableState> {
+    public let state: State
+    public let reducer: State.R
+
+    public init(state: State, reducer: State.R) {
+        self.state = state
+        self.reducer = reducer
     }
 }

@@ -7,9 +7,9 @@
 
 import Foundation
 
-public typealias CoordinatorViewBuilder = (any BusinessState) -> (any View)?
+public typealias CoordinatorViewBuilder = (any DLViewModelProtocol) -> (any View)?
 
-public extension DLNavigationView {
+public extension DLVVM {
     @Observable
     class NavigationManager {
         @ObservationIgnored
@@ -132,7 +132,7 @@ public extension DLNavigationView {
 
         func buildView(for hashableViewModel: NavigatorInfo) -> AnyView {
             for builder in viewBuilders {
-                if let view = builder(hashableViewModel.state) {
+                if let view = builder(hashableViewModel.viewModel) {
                     return AnyView(view)
                 }
             }

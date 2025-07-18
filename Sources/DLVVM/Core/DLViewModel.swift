@@ -9,26 +9,37 @@ import Combine
 import Foundation
 
 public typealias DLViewModel = DLVVM.DLViewModel
+public typealias DLViewModelProtocol = DLVVM.DLViewModelProtocol
 public typealias ViewModelOf<R: Reducer> = DLViewModel<R.State>
 
 // MARK: - DLVVM.DLViewModel
 
 public extension DLVVM {
+    protocol DLViewModelProtocol: Identifiable, AnyObject {
+        associatedtype State: BusinessState
+        var id: String { get }
+        var state: State { get }
+        var reducer: State.R { get }
+    }
+
     @MainActor
     @dynamicMemberLookup
     @Observable
-    final class DLViewModel<State: DLVVM.BusinessState> {
+    final class DLViewModel<State: DLVVM.BusinessState>: Identifiable,  @preconcurrency DLViewModelProtocol {
+        public let id: String = UUID().uuidString
         public var state: State
-        private let reducer: State.R
+        public let reducer: State.R
         private var effectTasks: [UUID: AnyCancellable] = [:]
-        private var subscription = Set<AnyCancellable>()
+        var subscription = Set<AnyCancellable>()
+
+        internal var navigatableKeyPaths: [String: () -> Void] = [:]
 
         public init(
             initialState: State,
-            _ reducer: () -> State.R
+            reducer: State.R
         ) {
             self.state = initialState
-            self.reducer = reducer()
+            self.reducer = reducer
         }
 
         public subscript<Value>(dynamicMember keyPath: WritableKeyPath<State, Value>) -> Value {
@@ -45,7 +56,7 @@ public extension DLVVM {
             executeEffect(effect)
         }
 
-        private func executeEffect(_ effect: DLVVM.Effect<State.R.Action>) {
+        private func executeEffect(_ effect: DLVVM.Procedure<State.R.Action, State>) {
             let uuid = UUID()
             switch effect.operation {
             case .none:
@@ -77,33 +88,60 @@ public extension DLVVM {
         }
 
         // 使用 NSMapTable 來存儲弱引用的子 ViewModel
-        private var childViewModels = NSMapTable<NSString, AnyObject>.strongToWeakObjects()
+        var childViewModels: [String: AnyObject] = [:]
 
         public func scope<ChildState: BusinessState>(
             state keyPath: WritableKeyPath<State, ChildState>,
-            event toParentEvent: @escaping (ChildState.R.Event) -> State.R.Action,
+            event toParentAction: @escaping (ChildState.R.Event) -> State.R.Action?,
             reducer childReducer: ChildState.R
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
             let key = cacheKey(keyPath: keyPath, reducerType: type(of: childReducer))
-            if let cachedViewModel = childViewModels.object(forKey: key as NSString) as? DLViewModel<ChildState> {
+            if let cachedViewModel = childViewModels[key] as? DLViewModel<ChildState> {
                 return cachedViewModel
             }
 
-            let childViewModel = DLViewModel<ChildState>(initialState: state[keyPath: keyPath]) {
-                childReducer
-            }
+            let state = state[keyPath: keyPath]
+            return _scope(
+                state: state,
+                event: toParentAction,
+                reducer: childReducer,
+                cacheKey: key
+            )
+        }
+
+        internal func _scope<ChildState: BusinessState>(
+            state: ChildState,
+            event toParentAction: @escaping (ChildState.R.Event) -> State.R.Action?,
+            reducer childReducer: ChildState.R,
+            cacheKey: String
+        ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
+
+            let childViewModel = DLViewModel<ChildState>(
+                initialState: state,
+                reducer: childReducer
+            )
+
+            let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(state).toOpaque()))"
+            let from = String(describing: ChildState.self.R) + fromAddress
+            let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque()))"
+            let to = String(describing: type(of: self.state).R) + toAddress
 
             childViewModel.eventPublisher
-                .print("@@@@")
-                .sink { [weak self] childEvent in
-                    let parentAction = toParentEvent(childEvent)
+                .print("↖️ [Event]: \(from) -> \(to)")
+                .compactMap { toParentAction($0) }
+                .sink { [weak self] parentAction in
                     self?.send(parentAction)
                 }
                 .store(in: &subscription)
             // 儲存到快取
-            childViewModels.setObject(childViewModel, forKey: key as NSString)
+            childViewModels[cacheKey] = childViewModel
 
             return childViewModel
+        }
+
+        deinit {
+            let address = "(\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))"
+            print("♻️ [Deinit] \(String(describing: type(of: self).State.R))" + address)
         }
     }
 }

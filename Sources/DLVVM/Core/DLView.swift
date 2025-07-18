@@ -15,10 +15,11 @@ public extension DLVVM {
     protocol DLView: View {
         associatedtype ReducerState: BusinessState
         typealias Action = ReducerState.R.Action
+        typealias ViewModel = DLViewModel<ReducerState>
 
-        var viewModel: DLViewModel<ReducerState> { get }
+        var viewModel: ViewModel { get }
 
-        init(viewModel: DLViewModel<ReducerState>)
+        init(viewModel: ViewModel)
     }
 }
 
