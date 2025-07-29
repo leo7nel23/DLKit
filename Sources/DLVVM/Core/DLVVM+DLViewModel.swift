@@ -25,9 +25,28 @@ public extension DLVVM {
     @MainActor
     @dynamicMemberLookup
     @Observable
-    final class DLViewModel<State: DLVVM.BusinessState>: Identifiable,  @preconcurrency DLViewModelProtocol {
-        public let id: String = UUID().uuidString
-        public var state: State
+    final class DLViewModel<State: DLVVM.BusinessState>: @preconcurrency Identifiable, @preconcurrency Hashable, @preconcurrency DLViewModelProtocol {
+        public static func == (lhs: DLVVM.DLViewModel<State>, rhs: DLVVM.DLViewModel<State>) -> Bool {
+            rhs.id == lhs.id
+        }
+
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+
+        func updateState(_ newState: State) -> Bool {
+            let old = "\(Unmanaged<AnyObject>.passUnretained(state).toOpaque())"
+            let new = "\(Unmanaged<AnyObject>.passUnretained(newState).toOpaque())"
+            if old != new {
+                state = newState
+                id = UUID().uuidString
+                return true
+            }
+            return false
+        }
+
+        public private(set) var id: String = UUID().uuidString
+        public internal(set) var state: State
         public let reducer: State.R
         private var effectTasks: [UUID: AnyCancellable] = [:]
         var subscription = Set<AnyCancellable>()
@@ -79,7 +98,7 @@ public extension DLVVM {
 
         // Generate cache key for child view model
         private func cacheKey<ChildState>(
-            keyPath: WritableKeyPath<State, ChildState>,
+            keyPath: KeyPath<State, ChildState>,
             reducerType: Any.Type
         ) -> String {
             let keyPathString = String(describing: keyPath)
@@ -91,29 +110,74 @@ public extension DLVVM {
         var childViewModels: [String: AnyObject] = [:]
 
         /// Creates a scoped child view model from a keyPath on the parent state
-        /// 
+        ///
         /// This method creates a child view model that observes changes to a specific property
         /// of the parent state. The child view model can send events back to the parent through
         /// the provided event mapper.
-        /// 
+        ///
         /// - Parameters:
         ///   - keyPath: The keyPath to the child state property
         ///   - toParentAction: Maps child events to parent actions
         ///   - childReducer: The reducer for the child state
         /// - Returns: A scoped child view model
         public func scope<ChildState: BusinessState>(
-            state keyPath: WritableKeyPath<State, ChildState>,
-            event toParentAction: @escaping (ChildState.R.Event) -> State.R.Action?,
+            state keyPath: KeyPath<State, ChildState>,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
             reducer childReducer: ChildState.R
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
             let key = cacheKey(keyPath: keyPath, reducerType: type(of: childReducer))
+            let state = state[keyPath: keyPath]
             if let cachedViewModel = childViewModels[key] as? DLViewModel<ChildState> {
+                if cachedViewModel.updateState(state) {
+                    subscribeIfNeeded(
+                        state: state,
+                        childViewModel: cachedViewModel,
+                        event: toParentAction,
+                        reducer: childReducer
+                    )
+                }
                 return cachedViewModel
             }
 
-            let state = state[keyPath: keyPath]
             return _scope(
                 state: state,
+                event: toParentAction,
+                reducer: childReducer,
+                cacheKey: key
+            )
+        }
+
+        /// Creates a scoped child view model from a keyPath on the parent state
+        ///
+        /// This method creates a child view model that observes changes to a specific property
+        /// of the parent state. The child view model can send events back to the parent through
+        /// the provided event mapper.
+        ///
+        /// - Parameters:
+        ///   - state: child state property
+        ///   - toParentAction: Maps child events to parent actions
+        ///   - childReducer: The reducer for the child state
+        /// - Returns: A scoped child view model
+        public func scope<ChildState: BusinessState>(
+            state childState: ChildState,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
+            reducer childReducer: ChildState.R
+        ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
+            let key = "\(Unmanaged<AnyObject>.passUnretained(childState).toOpaque())"
+            if let cachedViewModel = childViewModels[key] as? DLViewModel<ChildState> {
+                if cachedViewModel.updateState(childState) {
+                    subscribeIfNeeded(
+                        state: childState,
+                        childViewModel: cachedViewModel,
+                        event: toParentAction,
+                        reducer: childReducer
+                    )
+                }
+                return cachedViewModel
+            }
+
+            return _scope(
+                state: childState,
                 event: toParentAction,
                 reducer: childReducer,
                 cacheKey: key
@@ -143,25 +207,38 @@ public extension DLVVM {
                 reducer: childReducer
             )
 
-            if type(of: state).R.Event != Void.self {
-                let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(state).toOpaque()))"
-                let from = String(describing: ChildState.self.R) + fromAddress
-                let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque()))"
-                let to = String(describing: type(of: self.state).R) + toAddress
-
-                childViewModel.eventPublisher
-                    .print("↖️ [Event]: \(from) -> \(to)")
-                    .compactMap { toParentAction?($0) }
-                    .sink { [weak self] parentAction in
-                        self?.send(parentAction)
-                    }
-                    .store(in: &subscription)
-            }
+            subscribeIfNeeded(
+                state: state,
+                childViewModel: childViewModel,
+                event: toParentAction,
+                reducer: childReducer
+            )
 
             // Store in cache
             childViewModels[cacheKey] = childViewModel
 
             return childViewModel
+        }
+
+        private func subscribeIfNeeded<ChildState: BusinessState>(
+            state: ChildState,
+            childViewModel: DLViewModel<ChildState>,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action?)?,
+            reducer childReducer: ChildState.R
+        ) {
+            guard type(of: state).R.Event != Void.self else { return }
+            let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(childViewModel).toOpaque()))"
+            let from = String(describing: ChildState.self.R) + fromAddress
+            let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))"
+            let to = String(describing: type(of: self.state).R) + toAddress
+
+            childViewModel.eventPublisher
+                .print("↖️ [Event]: \(from) -> \(to)")
+                .compactMap { toParentAction?($0) }
+                .sink { [weak self] parentAction in
+                    self?.send(parentAction)
+                }
+                .store(in: &subscription)
         }
 
         deinit {
