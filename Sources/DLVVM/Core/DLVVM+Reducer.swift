@@ -25,6 +25,10 @@ public extension DLVVM.Reducer where State.R == Self {
     }
 }
 
+public extension DLVVM.Reducer where State.R.Action == Void {
+    func reduce(into state: State, action: Action) -> Procedure<Action, State> { .none }
+}
+
 
 public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
     func route<ChildState: BusinessState>(
@@ -62,6 +66,24 @@ public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
                         nil
                     }
                 },
+                rootState: container.state,
+                rootReducer: container.reducer,
+                routeStyle: routeStyle
+            )
+            .eraseToNextKeyPath()
+        )
+    }
+
+    func route<ChildState: NavigationFlow, RootState: NavigatableState>(
+        childState keyPath: WritableKeyPath<State, ChildState?>,
+        container: AnyNavigatableStateContainer<RootState>,
+        routeStyle: RouteStyle,
+        with state: State
+    ) {
+        state.routeSubject.send(
+            NavigationStateKeyPath(
+                keyPath: keyPath,
+                eventMapper: { _ in nil },
                 rootState: container.state,
                 rootReducer: container.reducer,
                 routeStyle: routeStyle
