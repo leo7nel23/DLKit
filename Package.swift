@@ -16,10 +16,10 @@ let package = Package(
             name: "FlowLayout",
             targets: ["FlowLayout"]
         ),
-        .library(
-            name: "SwiftUIKit",
-            targets: ["SwiftUIKit"]
-        ),
+//        .library(
+//            name: "SwiftUIKit",
+//            targets: ["SwiftUIKit"]
+//        ),
         .library(
             name: "Utils",
             targets: ["Utils"]
@@ -37,13 +37,13 @@ let package = Package(
         .target(
             name: "FlowLayout"
         ),
-        .target(
-            name: "SwiftUIKit",
-            dependencies: [
-                "DLVVM",
-                "FlowLayout"
-            ]
-        ),
+//        .target(
+//            name: "SwiftUIKit",
+//            dependencies: [
+//                "DLVVM",
+//                "FlowLayout"
+//            ]
+//        ),
         .target(
             name: "Utils"
         )
