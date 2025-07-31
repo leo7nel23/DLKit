@@ -84,7 +84,7 @@ struct NavigationStateKeyPath<State: NavigatableState, NextState: NavigationFlow
 /// runtime type checking.
 struct TypeErasedNextStateKeyPath<State: BusinessState> {
     // Store original data
-    private let _keyPath: Any
+    let _keyPath: Any
     private let _eventMapper: Any
     private let _reducer: Any
     private let routeStyle: RouteStyle

@@ -33,7 +33,7 @@ public extension DLVVM.Reducer where State.R.Action == Void {
 public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
     func route<ChildState: BusinessState>(
         childState keyPath: WritableKeyPath<State, ChildState?>,
-        to mapper: @escaping (ChildState.R.Event) -> Action?,
+        to mapper: ((ChildState.R.Event) -> Action)? = nil,
         reducer: ChildState.R,
         routeStyle: RouteStyle,
         with state: State
@@ -41,7 +41,7 @@ public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
         state.routeSubject.send(
             AnyNextStateKeyPath(
                 keyPath: keyPath,
-                eventMapper: mapper,
+                eventMapper: mapper ?? { _ in nil },
                 reducer: reducer,
                 routeStyle: routeStyle
             )

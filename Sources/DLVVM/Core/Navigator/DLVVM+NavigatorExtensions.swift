@@ -154,6 +154,7 @@ public extension Navigator {
                 return
             }
         }
+        print("❌❌❌ [Error] Fail to map stateType, keyPath: \(erased._keyPath)")
     }
 
     private func makeMatcher<PastState: NavigatableState, Next: NavigatableState>(
