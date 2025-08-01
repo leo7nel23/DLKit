@@ -22,6 +22,18 @@ public extension DLVVM {
         var reducer: State.R { get }
     }
 
+    private class ArrayViewModels {
+        fileprivate var viewModels: [String: AnyObject] = [:]
+
+        func setObject(_ object: AnyObject?, forKey key: String) {
+            viewModels[key] = object
+        }
+
+        func object(forKey key: String) -> AnyObject? {
+            viewModels[key]
+        }
+    }
+
     @MainActor
     @dynamicMemberLookup
     @Observable
@@ -108,7 +120,7 @@ public extension DLVVM {
             return "\(keyPathString)_\(reducerString)"
         }
 
-        // Store child ViewModels with weak references using dictionary
+        // Store child ViewModels with weak references to prevent retain cycles
         var childViewModels: [String: AnyObject] = [:]
 
         /// Creates a scoped child view model from a keyPath on the parent state
@@ -165,11 +177,91 @@ public extension DLVVM {
             event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
             reducer childReducer: ChildState.R
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
-            _scope(
+            let key = "\(Unmanaged<AnyObject>.passUnretained(childState).toOpaque())"
+            if let cached = object(forKey: key) as? DLViewModel<ChildState> {
+                return cached
+            }
+            return _scope(
                 state: childState,
                 event: toParentAction,
-                reducer: childReducer
+                reducer: childReducer,
+                cacheKey: key
             )
+        }
+        
+        /// Creates an array of scoped child view models from a keyPath pointing to an array of child states
+        ///
+        /// This method is useful when the parent state contains an array of child states, and you need
+        /// to create individual view models for each child state. Each child view model will be properly
+        /// scoped and can send events back to the parent.
+        ///
+        /// - Parameters:
+        ///   - arrayKeyPath: The keyPath to the array of child states on the parent state
+        ///   - toParentAction: Maps child events to parent actions, receives both the child event and its index
+        ///   - childReducer: The reducer for the child state
+        /// - Returns: An array of scoped child view models
+        public func scope<ChildState: BusinessState>(
+            stateArray arrayKeyPath: KeyPath<State, [ChildState]>,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
+            reducer childReducer: ChildState.R
+        ) -> [DLViewModel<ChildState>] where ChildState.R.State == ChildState, ChildState: Identifiable {
+            let key = cacheKey(keyPath: arrayKeyPath, reducerType: type(of: childReducer))
+            let childStates = state[keyPath: arrayKeyPath]
+            let cachedViewModels = object(forKey: key) as? ArrayViewModels ?? ArrayViewModels()
+            setObject(nil, forKey: key)
+
+            let newCachedViewModels = ArrayViewModels()
+            let viewModels = childStates.map { childState in
+                let childKey = String(describing: childState.id)
+
+                if let cachedViewModel = cachedViewModels.object(forKey: childKey) as? DLViewModel<ChildState> {
+                    newCachedViewModels.setObject(cachedViewModel, forKey: childKey)
+                    return cachedViewModel
+                }
+
+                // Create new view model
+                let childViewModel = _scope(
+                    state: childState,
+                    event: toParentAction,
+                    reducer: childReducer,
+                    cacheKey: nil
+                )
+
+                newCachedViewModels.setObject(childViewModel, forKey: childKey)
+
+                return childViewModel
+            }
+
+            setObject(newCachedViewModels, forKey: key)
+            return viewModels
+        }
+
+        /// Creates an array of scoped child view models from an array of child states
+        ///
+        /// This is a convenience method when you already have an array of child states
+        /// and want to create view models for each one.
+        ///
+        /// - Parameters:
+        ///   - childStates: The array of child states
+        ///   - toParentAction: Maps child events to parent actions, receives both the child event and its index
+        ///   - childReducer: The reducer for the child state
+        /// - Returns: An array of scoped child view models
+        public func scope<ChildState: BusinessState>(
+            stateArray childStates: [ChildState],
+            event toParentAction: ((Int, ChildState.R.Event) -> State.R.Action)? = nil,
+            reducer childReducer: ChildState.R
+        ) -> [DLViewModel<ChildState>] where ChildState.R.State == ChildState {
+            return childStates.enumerated().map { index, childState in
+                let eventMapper: ((ChildState.R.Event) -> State.R.Action?)? = toParentAction.map { mapper in
+                    { event in mapper(index, event) }
+                }
+                
+                return _scope(
+                    state: childState,
+                    event: eventMapper,
+                    reducer: childReducer
+                )
+            }
         }
 
         /// Internal method to create a scoped child view model

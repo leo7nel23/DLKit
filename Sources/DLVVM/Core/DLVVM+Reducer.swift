@@ -96,6 +96,14 @@ public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
         state.dismiss(.dismiss)
     }
 
+    func dismissSheet(with state: State) {
+        state.dismiss(.dismissSheet)
+    }
+
+    func dismissFullCover(with state: State) {
+        state.dismiss(.dismissFullCover)
+    }
+
     func pop(with state: State) {
         state.dismiss(.pop)
     }
