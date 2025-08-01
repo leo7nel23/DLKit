@@ -92,9 +92,9 @@ public extension Navigator {
         viewModel: DLViewModel<BizState>
     ) {
         guard !(viewModel is Navigator) else { return }
-        let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(viewModel.state).toOpaque()))"
+        let fromAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(viewModel.state).toOpaque())".suffix(5) + ")"
         let from = String(describing: BizState.self.R) + fromAddress
-        let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque()))"
+        let toAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque())".suffix(5) + ")"
         let to = String(describing: type(of: self.state).R) + toAddress
 
         viewModel.navigatorEventPublisher

@@ -227,9 +227,9 @@ public extension DLVVM {
             reducer childReducer: ChildState.R
         ) {
             guard type(of: state).R.Event != Void.self else { return }
-            let fromAddress = "(\(Unmanaged<AnyObject>.passUnretained(childViewModel).toOpaque()))"
+            let fromAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(childViewModel).toOpaque())".suffix(5) + ")"
             let from = String(describing: ChildState.self.R) + fromAddress
-            let toAddress = "(\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))"
+            let toAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(self).toOpaque())".suffix(5) + ")"
             let to = String(describing: type(of: self.state).R) + toAddress
 
             childViewModel.eventPublisher
@@ -242,7 +242,7 @@ public extension DLVVM {
         }
 
         deinit {
-            let address = "(\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))"
+            let address = "(" + "\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))".suffix(5)
             print("♻️ [Deinit] \(String(describing: type(of: self).State.R))" + address)
         }
     }

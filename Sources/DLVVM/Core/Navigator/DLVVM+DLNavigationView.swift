@@ -80,6 +80,10 @@ public extension DLVVM {
                 guard !removedIds.isEmpty else { return }
                 viewModel.handleViewPopper(removedIds)
             }
+            .onChange(of: viewModel.manager.sheet, { old, new in
+                guard let old, new != old else { return }
+                viewModel.handleViewPopper([old.viewModel.id])
+            })
             .onChange(of: viewModel.manager.fullScreenCover) { old, new in
                 guard let old, new != old else { return }
                 viewModel.handleViewPopper([old.viewModel.id])
