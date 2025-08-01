@@ -22,12 +22,12 @@ public extension DLVVM {
         private(set) var rootInfo: NavigatorInfo!
         var manager: Navigator!
 
-        let stateTypeList: [any NavigatableState.Type]
+        let stateTypeList: [any BusinessState.Type]
 
         public let eventHandler: ((Any) -> Any?)?
 
         public init(
-            stateTypeList: [any NavigatableState.Type],
+            stateTypeList: [any BusinessState.Type],
             viewBuilder: @escaping CoordinatorViewBuilder,
             eventHandler: ((Any) -> Any?)? = nil
         ) {

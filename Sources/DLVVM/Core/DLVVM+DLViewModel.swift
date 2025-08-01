@@ -59,6 +59,8 @@ public extension DLVVM {
         ) {
             self.state = initialState
             self.reducer = reducer
+            let address = "(" + "\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))".suffix(5)
+            print("🌱 [Init] \(String(describing: type(of: self).State.R))" + address)
         }
 
         public subscript<Value>(dynamicMember keyPath: WritableKeyPath<State, Value>) -> Value {
@@ -122,12 +124,12 @@ public extension DLVVM {
         /// - Returns: A scoped child view model
         public func scope<ChildState: BusinessState>(
             state keyPath: KeyPath<State, ChildState>,
-            event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action?)? = nil,
             reducer childReducer: ChildState.R
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
             let key = cacheKey(keyPath: keyPath, reducerType: type(of: childReducer))
             let state = state[keyPath: keyPath]
-            if let cachedViewModel = childViewModels[key] as? DLViewModel<ChildState> {
+            if let cachedViewModel = object(forKey: key) as? DLViewModel<ChildState> {
                 if cachedViewModel.updateState(state) {
                     subscribeIfNeeded(
                         state: state,
@@ -163,24 +165,10 @@ public extension DLVVM {
             event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
             reducer childReducer: ChildState.R
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
-            let key = "\(Unmanaged<AnyObject>.passUnretained(childState).toOpaque())"
-            if let cachedViewModel = childViewModels[key] as? DLViewModel<ChildState> {
-                if cachedViewModel.updateState(childState) {
-                    subscribeIfNeeded(
-                        state: childState,
-                        childViewModel: cachedViewModel,
-                        event: toParentAction,
-                        reducer: childReducer
-                    )
-                }
-                return cachedViewModel
-            }
-
-            return _scope(
+            _scope(
                 state: childState,
                 event: toParentAction,
-                reducer: childReducer,
-                cacheKey: key
+                reducer: childReducer
             )
         }
 
@@ -199,7 +187,7 @@ public extension DLVVM {
             state: ChildState,
             event toParentAction: ((ChildState.R.Event) -> State.R.Action?)?,
             reducer childReducer: ChildState.R,
-            cacheKey: String
+            cacheKey: String? = nil
         ) -> DLViewModel<ChildState> where ChildState.R.State == ChildState {
 
             let childViewModel = DLViewModel<ChildState>(
@@ -215,7 +203,7 @@ public extension DLVVM {
             )
 
             // Store in cache
-            childViewModels[cacheKey] = childViewModel
+            setObject(childViewModel, forKey: cacheKey)
 
             return childViewModel
         }
@@ -239,6 +227,19 @@ public extension DLVVM {
                     self?.send(parentAction)
                 }
                 .store(in: &subscription)
+        }
+
+        internal func setObject(_ object: AnyObject?, forKey defaultName: String?) {
+            guard let defaultName else { return }
+            childViewModels[defaultName] = object
+
+            let address = "(" + "\(Unmanaged<AnyObject>.passUnretained(self).toOpaque()))".suffix(5)
+            let from = String(describing: Self.State.R)
+            print("[\(from) - \(address)] count = \(childViewModels.count)")
+        }
+
+        internal func object(forKey key: String) -> AnyObject? {
+            childViewModels[key]
         }
 
         deinit {

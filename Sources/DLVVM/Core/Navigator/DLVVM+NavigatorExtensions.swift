@@ -61,7 +61,7 @@ public extension Navigator {
         guard let nextState = pastViewModel.state[keyPath: keyPath] else { return nil }
         let key = cacheKey(keyPath: keyPath, reducerType: type(of: nextReducer))
 
-        if let cachedViewModel = childViewModels[key] as? DLViewModel<NextState> {
+        if let cachedViewModel = object(forKey: key) as? DLViewModel<NextState> {
             return cachedViewModel
         }
         // scope next to past
@@ -77,8 +77,48 @@ public extension Navigator {
         bindRouter(viewModel: nextViewModel)
         navigatableKeyPaths[nextViewModel.id] = { [pastViewModel] in
             pastViewModel.state[keyPath: keyPath] = nil
-            pastViewModel.childViewModels[key] = nil
+            pastViewModel.setObject(nil, forKey: key)
         }
+        return nextViewModel
+    }
+
+    /// Creates a scoped child view model from a keyPath on the parent state
+    ///
+    /// This method creates a child view model that observes changes to a specific property
+    /// of the parent state. The child view model can send events back to the parent through
+    /// the provided event mapper.
+    ///
+    /// - Parameters:
+    ///   - keyPath: The keyPath to the child state property
+    ///   - toParentAction: Maps child events to parent actions
+    ///   - childReducer: The reducer for the child state
+    /// - Returns: A scoped child view model
+    private func pastViewScope<PastState: NavigatableState, ChildState: BusinessState>(
+        state keyPath: WritableKeyPath<PastState, ChildState?>,
+        to pastViewModel: DLViewModel<PastState>,
+        event toParentAction: ((ChildState.R.Event) -> PastState.R.Action?)? = nil,
+        reducer childReducer: ChildState.R
+    ) -> DLViewModel<ChildState>? where ChildState.R.State == ChildState {
+        let key = cacheKey(keyPath: keyPath, reducerType: type(of: childReducer))
+        guard let state = pastViewModel.state[keyPath: keyPath] else { return nil }
+        if let cachedViewModel = object(forKey: key) as? DLViewModel<ChildState> {
+            if !cachedViewModel.updateState(state) {
+                return cachedViewModel
+            }
+        }
+
+        let nextViewModel = pastViewModel._scope(
+            state: state,
+            event: toParentAction,
+            reducer: childReducer,
+            cacheKey: key
+        )
+
+        navigatableKeyPaths[nextViewModel.id] = { [pastViewModel] in
+            pastViewModel.state[keyPath: keyPath] = nil
+            pastViewModel.setObject(nil, forKey: key)
+        }
+
         return nextViewModel
     }
 
@@ -149,12 +189,62 @@ public extension Navigator {
         erased: TypeErasedNextStateKeyPath<PastState>
     ) {
         for stateType in state.stateTypeList {
-            let matcher = makeMatcher(from: pastViewModel, nil, stateType)
-            if matcher.match(erased) != nil {
-                return
+            if let stateType = stateType as? (any NavigatableState.Type) {
+                let matcher = makeMatcher(from: pastViewModel, nil, stateType)
+                if matcher.match(erased) != nil { return }
+            } else {
+                let matcher = makeMatcher(from: pastViewModel, stateType)
+                if matcher.match(erased) != nil { return }
             }
         }
         print("❌❌❌ [Error] Fail to map stateType, keyPath: \(erased._keyPath)")
+    }
+
+    private func makeMatcher<PastState: NavigatableState, Next: BusinessState>(
+        from pastViewModel: DLViewModel<PastState>,
+        _: Next.Type
+    ) -> NextStateMatcher<PastState> {
+        .init(
+            type: Next.self,
+            match: { [weak self] erased in
+                guard let self else { return }
+                let result: ((any DLViewModelProtocol)?, RouteStyle)? = {
+                    if let keyInfo = erased.typed(as: Next.self) {
+                        guard let nextViewModel = pastViewScope(
+                            state: keyInfo.keyPath,
+                            to: pastViewModel,
+                            event: keyInfo.eventMapper,
+                            reducer: keyInfo.reducer
+                        ) else {
+                            return nil
+                        }
+
+                        return (
+                            nextViewModel,
+                            keyInfo.routeStyle
+                        )
+                    } else {
+                        return nil
+                    }
+                }()
+
+                guard let nextViewModel = result?.0,
+                      let routeStyle = result?.1
+                else { return result?.0 }
+
+                switch routeStyle {
+                case .push:
+                    send(.push(nextViewModel))
+
+                case .fullScreenCover:
+                    send(.presentFullScreenCover(nextViewModel))
+
+                case .sheet:
+                    send(.presentSheet(nextViewModel))
+                }
+                return nextViewModel
+            }
+        )
     }
 
     private func makeMatcher<PastState: NavigatableState, Next: NavigatableState>(
@@ -179,9 +269,12 @@ public extension Navigator {
                         // if it's navigator, look type from next
                         if let navigator = nextViewModel as? Navigator {
                             for stateType in navigator.stateTypeList {
-                                let matcher = makeMatcher(from: pastViewModel, navigator, stateType)
-                                if matcher.match(erased) != nil {
-                                    break
+                                if let stateType = stateType as? (any NavigatableState.Type) {
+                                    let matcher = makeMatcher(from: pastViewModel, navigator, stateType)
+                                    if matcher.match(erased) != nil { break }
+                                } else {
+                                    let matcher = makeMatcher(from: pastViewModel, stateType)
+                                    if matcher.match(erased) != nil { break }
                                 }
                             }
                         }
