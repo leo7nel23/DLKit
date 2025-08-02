@@ -22,17 +22,8 @@ public extension DLVVM {
         var reducer: State.R { get }
     }
 
-    private class ArrayViewModels {
-        fileprivate var viewModels: [String: AnyObject] = [:]
-
-        func setObject(_ object: AnyObject?, forKey key: String) {
-            viewModels[key] = object
-        }
-
-        func object(forKey key: String) -> AnyObject? {
-            viewModels[key]
-        }
-    }
+    
+    
 
     @MainActor
     @dynamicMemberLookup
@@ -210,14 +201,46 @@ public extension DLVVM {
         ) -> [DLViewModel<ChildState>] where ChildState.R.State == ChildState, ChildState: Identifiable {
             let key = cacheKey(keyPath: arrayKeyPath, reducerType: type(of: childReducer))
             let childStates = state[keyPath: arrayKeyPath]
+            
+            // Array-level caching key based on state content
+            let arrayContentKey = key + "_array"
+            
+            // Check if we have a cached array with the same content
+            if let cachedArrayContainer = object(forKey: arrayContentKey) as? ArrayContainer<ChildState>,
+               cachedArrayContainer.hasEqualContent(to: childStates) {
+                // Update existing ViewModels with new state if needed
+                for (index, childState) in childStates.enumerated() {
+                    if index < cachedArrayContainer.viewModels.count {
+                        let cachedViewModel = cachedArrayContainer.viewModels[index]
+                        if cachedViewModel.updateState(childState) {
+                            subscribeIfNeeded(
+                                state: childState,
+                                childViewModel: cachedViewModel,
+                                event: toParentAction,
+                                reducer: childReducer
+                            )
+                        }
+                    }
+                }
+                // Return the same array instance for SwiftUI stability
+                return cachedArrayContainer.viewModels
+            }
+            
+            // Content changed or no cache - rebuild array
             let cachedViewModels = object(forKey: key) as? ArrayViewModels ?? ArrayViewModels()
-            setObject(nil, forKey: key)
-
             let newCachedViewModels = ArrayViewModels()
             let viewModels = childStates.map { childState in
                 let childKey = String(describing: childState.id)
 
                 if let cachedViewModel = cachedViewModels.object(forKey: childKey) as? DLViewModel<ChildState> {
+                    if cachedViewModel.updateState(childState) {
+                        subscribeIfNeeded(
+                            state: childState,
+                            childViewModel: cachedViewModel,
+                            event: toParentAction,
+                            reducer: childReducer
+                        )
+                    }
                     newCachedViewModels.setObject(cachedViewModel, forKey: childKey)
                     return cachedViewModel
                 }
@@ -231,11 +254,99 @@ public extension DLVVM {
                 )
 
                 newCachedViewModels.setObject(childViewModel, forKey: childKey)
-
                 return childViewModel
             }
 
+            // Cache both individual ViewModels and the array container
             setObject(newCachedViewModels, forKey: key)
+            let arrayContainer = ArrayContainer(viewModels: viewModels, contentSnapshot: childStates.map { $0.id })
+            setObject(arrayContainer, forKey: arrayContentKey)
+            
+            return viewModels
+        }
+        
+        /// Creates an array of scoped child view models from an IdentifiedArray
+        ///
+        /// This method provides type-safe scoping for identified collections, ensuring
+        /// compile-time safety and preventing runtime errors from non-identified collections.
+        ///
+        /// **Type Safety**: Only works with IdentifiedArray, preventing misuse with plain arrays.
+        /// **Performance**: Intelligent caching returns the same array instance when content is unchanged.
+        /// **SwiftUI Integration**: Provides stable references for SwiftUI containers like ScrollViewReader.
+        ///
+        /// - Parameters:
+        ///   - arrayKeyPath: The keyPath to the IdentifiedArray of child states
+        ///   - toParentAction: Maps child events to parent actions
+        ///   - childReducer: The reducer for the child state
+        /// - Returns: An array of scoped child view models with intelligent caching
+        public func scope<ChildState: BusinessState>(
+            identifiedArray arrayKeyPath: KeyPath<State, IdentifiedArray<ChildState>>,
+            event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
+            reducer childReducer: ChildState.R
+        ) -> [DLViewModel<ChildState>] where ChildState.R.State == ChildState {
+            let key = cacheKey(keyPath: arrayKeyPath, reducerType: type(of: childReducer))
+            let identifiedArray = state[keyPath: arrayKeyPath]
+            
+            // Array-level caching key based on state content
+            let arrayContentKey = key + "_identified_array"
+            
+            // Check if we have a cached array with the same content
+            if let cachedContainer = object(forKey: arrayContentKey) as? CachedViewModelArray<ChildState>,
+               cachedContainer.hasEqualContent(to: identifiedArray) {
+                // Update existing ViewModels with new state if needed
+                for (index, childState) in identifiedArray.enumerated() {
+                    if index < cachedContainer.viewModels.count {
+                        let cachedViewModel = cachedContainer.viewModels[index]
+                        if cachedViewModel.updateState(childState) {
+                            subscribeIfNeeded(
+                                state: childState,
+                                childViewModel: cachedViewModel,
+                                event: toParentAction,
+                                reducer: childReducer
+                            )
+                        }
+                    }
+                }
+                // Return the same array instance for SwiftUI stability
+                return cachedContainer.viewModels
+            }
+            
+            // Content changed or no cache - rebuild array
+            let cachedViewModels = object(forKey: key) as? ArrayViewModels ?? ArrayViewModels()
+            let newCachedViewModels = ArrayViewModels()
+            let viewModels = identifiedArray.map { childState in
+                let childKey = String(describing: childState.id)
+
+                if let cachedViewModel = cachedViewModels.object(forKey: childKey) as? DLViewModel<ChildState> {
+                    if cachedViewModel.updateState(childState) {
+                        subscribeIfNeeded(
+                            state: childState,
+                            childViewModel: cachedViewModel,
+                            event: toParentAction,
+                            reducer: childReducer
+                        )
+                    }
+                    newCachedViewModels.setObject(cachedViewModel, forKey: childKey)
+                    return cachedViewModel
+                }
+
+                // Create new view model
+                let childViewModel = _scope(
+                    state: childState,
+                    event: toParentAction,
+                    reducer: childReducer,
+                    cacheKey: nil
+                )
+
+                newCachedViewModels.setObject(childViewModel, forKey: childKey)
+                return childViewModel
+            }
+
+            // Cache both individual ViewModels and the array container
+            setObject(newCachedViewModels, forKey: key)
+            let container = CachedViewModelArray(viewModels: viewModels, contentSnapshot: identifiedArray)
+            setObject(container, forKey: arrayContentKey)
+            
             return viewModels
         }
 

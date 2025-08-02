@@ -401,6 +401,91 @@ func testFeatureLogic() {
 }
 ```
 
+## Collection Management
+
+### IdentifiedArray
+
+DLVVM provides a type-safe `IdentifiedArray<Element>` for managing collections of identified elements with full Array-like functionality.
+
+#### Features
+- **Type Safety**: Only works with `BusinessState & Identifiable` elements
+- **Array Compatibility**: Full Array API with `append()`, `insert()`, `remove()`, etc.
+- **ID-based Operations**: Access elements by ID with `array[id: someID]`
+- **Collection Protocols**: Implements `Collection`, `MutableCollection`, `RangeReplaceableCollection`
+- **SwiftUI Integration**: Optimized for SwiftUI with intelligent caching
+
+#### Usage Examples
+
+```swift
+// Declaration in State
+struct State: NavigatableState {
+    var walletStates: IdentifiedArray<WalletState> = []
+    // or using typealias
+    var walletStates: IdentifiedArrayOf<WalletState> = []
+}
+
+// Array-like operations
+state.walletStates.append(newWallet)
+state.walletStates.insert(wallet, at: 0)
+state.walletStates.remove(at: index)
+
+// ID-based operations
+let wallet = state.walletStates[id: walletID]
+state.walletStates[id: walletID] = updatedWallet
+state.walletStates.remove(id: walletID)
+
+// Collection operations
+let count = state.walletStates.count
+let isEmpty = state.walletStates.isEmpty
+let first = state.walletStates.first
+
+// Initialization
+let array: IdentifiedArray<WalletState> = []
+let array: IdentifiedArray<WalletState> = [wallet1, wallet2]
+let array = IdentifiedArray([wallet1, wallet2])
+```
+
+#### Type-Safe Scope Operations
+
+```swift
+// Type-safe scoping with IdentifiedArray
+public func scope<ChildState: BusinessState>(
+    identifiedArray arrayKeyPath: KeyPath<State, IdentifiedArray<ChildState>>,
+    event toParentAction: ((ChildState.R.Event) -> State.R.Action)? = nil,
+    reducer childReducer: ChildState.R
+) -> [DLViewModel<ChildState>]
+
+// Usage in views
+ForEachViewModel(
+    viewModel.scope(
+        identifiedArray: \.walletStates,  // Type-safe!
+        event: Action.walletCard,
+        reducer: WalletCardFeature()
+    )
+) { walletViewModel in
+    WalletCardView(viewModel: walletViewModel)
+}
+```
+
+#### Performance Benefits
+- **Intelligent Caching**: Returns same array instance when content unchanged
+- **SwiftUI Stability**: Prevents infinite loops with ScrollViewReader and other containers
+- **Memory Efficiency**: Optimized for large collections with minimal overhead
+
+### Legacy Array Support
+
+The framework still supports plain `[Element]` arrays for backward compatibility, but `IdentifiedArray` is recommended for new code:
+
+```swift
+// Legacy (still supported)
+var walletStates: [WalletState] = []
+viewModel.scope(stateArray: \.walletStates, reducer: WalletCardFeature())
+
+// Recommended (type-safe)
+var walletStates: IdentifiedArray<WalletState> = []
+viewModel.scope(identifiedArray: \.walletStates, reducer: WalletCardFeature())
+```
+
 ## Advanced Patterns
 
 ### Procedure Effects

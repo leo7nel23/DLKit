@@ -20,19 +20,31 @@ public extension DLVVM {
     /// 
     /// **Performance**: Integrates seamlessly with DLVVM's intelligent cache management
     /// and SwiftUI's diffing system for optimal performance.
-    struct ForEachViewModel<Data, ID, Content> where Data: RandomAccessCollection, ID: Hashable {
+    struct ForEachViewModel<Data, ID, Content>: Identifiable where Data: RandomAccessCollection, ID: Hashable {
         public let data: Data
         public let idKeyPath: KeyPath<Data.Element, ID>
         public let content: (Data.Element) -> Content
+        
+        /// Stable ID based on data content
+        public let id: Int
         
         /// Internal initializer - use the public extensions instead
         internal init(data: Data, id: KeyPath<Data.Element, ID>, content: @escaping (Data.Element) -> Content) {
             self.data = data
             self.idKeyPath = id
             self.content = content
+            
+            // Calculate stable ID based on data content
+            var hasher = Hasher()
+            for element in data {
+                hasher.combine(element[keyPath: id])
+            }
+            self.id = hasher.finalize()
         }
     }
 }
+
+// MARK: - Identifiable Collection Support
 
 extension ForEachViewModel: View where Content: View {
     /// Renders the ForEachViewModel as a native SwiftUI ForEach
@@ -49,6 +61,7 @@ extension ForEachViewModel: View where Content: View {
 // MARK: - Identifiable Collection Support
 
 extension ForEachViewModel where Content: View, Data.Element: Identifiable, ID == Data.Element.ID {
+
     /// Creates a ForEachViewModel for any collection of Identifiable elements
     /// 
     /// **Primary Use Case**: Use with `parentViewModel.scope(stateArray: \.[childStates], reducer: ChildFeature())`
@@ -64,15 +77,13 @@ extension ForEachViewModel where Content: View, Data.Element: Identifiable, ID =
         _ collection: Data,
         @ViewBuilder content: @escaping (Data.Element) -> Content
     ) {
-        self.data = collection
-        self.idKeyPath = \.id
-        self.content = content
+        self.init(data: collection, id: \.id, content: content)
     }
 }
 
 // MARK: - Custom ID KeyPath Support
 
-extension ForEachViewModel where Content: View {
+extension ForEachViewModel {
     /// Creates a ForEachViewModel with custom ID keyPath
     /// 
     /// **Use Cases**: 
@@ -91,8 +102,6 @@ extension ForEachViewModel where Content: View {
         id: KeyPath<Data.Element, ID>,
         @ViewBuilder content: @escaping (Data.Element) -> Content
     ) {
-        self.data = collection
-        self.idKeyPath = id
-        self.content = content
+        self.init(data: collection, id: id, content: content)
     }
 }
