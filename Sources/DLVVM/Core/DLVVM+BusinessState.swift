@@ -16,20 +16,30 @@ public extension DLVVM {
     }
 }
 
-nonisolated(unsafe) private var eventSubjectAssociatedKey: Void?
+extension DLVVM {
+    /// Request type for communication between child and parent ViewModels
+    enum ViewModelRequest<Event> {
+        /// Request parent to dismiss this view
+        case dismiss
+        /// Business logic event to be handled by parent
+        case event(Event)
+    }
+}
+
+nonisolated(unsafe) private var requestSubjectAssociatedKey: Void?
 
 extension DLVVM.BusinessState {
-    var eventSubject: PassthroughSubject<R.Event, Never> {
+    var requestSubject: PassthroughSubject<DLVVM.ViewModelRequest<R.Event>, Never> {
         if let subject = objc_getAssociatedObject(
             self,
-            &eventSubjectAssociatedKey
-        ) as? PassthroughSubject<R.Event, Never> {
+            &requestSubjectAssociatedKey
+        ) as? PassthroughSubject<DLVVM.ViewModelRequest<R.Event>, Never> {
             return subject
         } else {
-            let subject = PassthroughSubject<R.Event, Never>()
+            let subject = PassthroughSubject<DLVVM.ViewModelRequest<R.Event>, Never>()
             objc_setAssociatedObject(
                 self,
-                &eventSubjectAssociatedKey,
+                &requestSubjectAssociatedKey,
                 subject,
                 .OBJC_ASSOCIATION_RETAIN
             )
@@ -37,11 +47,21 @@ extension DLVVM.BusinessState {
         }
     }
 
-    var eventPublisher: AnyPublisher<R.Event, Never> {
-        eventSubject.eraseToAnyPublisher()
+    var requestPublisher: AnyPublisher<DLVVM.ViewModelRequest<R.Event>, Never> {
+        requestSubject.eraseToAnyPublisher()
     }
 
+    internal func fireRequest(_ request: DLVVM.ViewModelRequest<R.Event>) {
+        requestSubject.send(request)
+    }
+    
+    // MARK: - Convenience methods
+    
     internal func fireEvent(_ event: R.Event) {
-        eventSubject.send(event)
+        fireRequest(.event(event))
+    }
+    
+    internal func fireDismiss() {
+        fireRequest(.dismiss)
     }
 }

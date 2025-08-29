@@ -155,22 +155,35 @@ public extension Navigator {
 
         viewModel.routeDismissPublisher
             .print("⤵️ [Dismiss]: \(from) -> \(to)")
-            .sink { [weak self] type in
-                switch type {
-                case .dismiss:
-                    self?.send(.dismiss)
+            .sink { [weak self] dismissRouter in
+                guard let self else { return }
+                switch dismissRouter {
+                    case .any:
+                        if self.manager?.sheet != nil {
+                            self.send(.dismissSheet)
+                        } else if self.manager.fullScreenCover != nil {
+                            self.send(.dismissFullScreenOver)
+                        } else {
+                            self.send(.dismiss)
+                        }
 
-                case .dismissFullCover:
-                    self?.send(.dismissFullScreenOver)
+                    case let .direct(type):
+                        switch type {
+                            case .dismiss:
+                                self.send(.dismiss)
 
-                case .dismissSheet:
-                    self?.send(.dismissSheet)
+                            case .dismissFullCover:
+                                self.send(.dismissFullScreenOver)
 
-                case .pop:
-                    self?.send(.pop)
+                            case .dismissSheet:
+                                self.send(.dismissSheet)
 
-                case .popToRoot:
-                    self?.send(.popToRoot)
+                            case .pop:
+                                self.send(.pop)
+
+                            case .popToRoot:
+                                self.send(.popToRoot)
+                        }
                 }
             }
             .store(in: &subscription)

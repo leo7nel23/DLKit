@@ -39,20 +39,20 @@ extension DLVVM.NavigatableState {
     }
 }
 
-nonisolated(unsafe) private var routeDismissSubjectAssociatedKey: Void?
+nonisolated(unsafe) private var routeDismissRouterSubjectAssociatedKey: Void?
 
 extension DLVVM.NavigatableState {
-    private var routeDismissSubject: PassthroughSubject<DismissType, Never> {
+    private var routeDismissSubject: PassthroughSubject<DLVVM.DismissRouter, Never> {
         if let subject = objc_getAssociatedObject(
             self,
-            &routeDismissSubjectAssociatedKey
-        ) as? PassthroughSubject<DismissType, Never> {
+            &routeDismissRouterSubjectAssociatedKey
+        ) as? PassthroughSubject<DLVVM.DismissRouter, Never> {
             return subject
         } else {
-            let subject = PassthroughSubject<DismissType, Never>()
+            let subject = PassthroughSubject<DLVVM.DismissRouter, Never>()
             objc_setAssociatedObject(
                 self,
-                &routeDismissSubjectAssociatedKey,
+                &routeDismissRouterSubjectAssociatedKey,
                 subject,
                 .OBJC_ASSOCIATION_RETAIN
             )
@@ -60,12 +60,16 @@ extension DLVVM.NavigatableState {
         }
     }
 
-    var routeDismissPublisher: AnyPublisher<DismissType, Never> {
+    var routeDismissPublisher: AnyPublisher<DLVVM.DismissRouter, Never> {
         routeDismissSubject.eraseToAnyPublisher()
     }
 
     internal func dismiss(_ type: DismissType) {
-        routeDismissSubject.send(type)
+        routeDismissSubject.send(.direct(type))
+    }
+
+    internal func dismissAny() {
+        routeDismissSubject.send(.any)
     }
 }
 

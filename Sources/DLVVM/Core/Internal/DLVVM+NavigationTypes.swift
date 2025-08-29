@@ -23,6 +23,13 @@ public extension DLVVM {
     }
 }
 
+extension DLVVM {
+    enum DismissRouter {
+        case any
+        case direct(DismissType)
+    }
+}
+
 public typealias RouteStyle = DLVVM.RouteStyle
 public typealias DismissType = DLVVM.DismissType
 

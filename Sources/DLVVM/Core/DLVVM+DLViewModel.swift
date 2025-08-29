@@ -98,6 +98,9 @@ public extension DLVVM {
                 effectTasks[uuid] = AnyCancellable { @Sendable in
                     task.cancel()
                 }
+            case .dismiss:
+                // Request parent to dismiss by sending dismiss request
+                state.fireDismiss()
             }
         }
 
@@ -313,11 +316,20 @@ public extension DLVVM {
             let toAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(self).toOpaque())".suffix(5) + ")"
             let to = String(describing: type(of: self.state).R) + toAddress
 
-            childViewModel.eventPublisher
-                .print("↖️ [Event]: \(from) -> \(to)")
-                .compactMap { toParentAction?($0) }
-                .sink { [weak self] parentAction in
-                    self?.send(parentAction)
+            childViewModel.state.requestPublisher
+                .print("↖️ [Request]: \(from) -> \(to)")
+                .sink { [weak self] request in
+                    switch request {
+                    case .dismiss:
+                        guard let navigatableParent = self?.state as? any NavigatableState else { return }
+                        navigatableParent.dismissAny()
+
+                    case let .event(childEvent):
+                        // Handle business event
+                        if let parentAction = toParentAction?(childEvent) {
+                            self?.send(parentAction)
+                        }
+                    }
                 }
                 .store(in: &subscription)
         }
