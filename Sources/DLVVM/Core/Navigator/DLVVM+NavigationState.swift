@@ -26,7 +26,7 @@ public extension DLVVM {
 
         public let eventHandler: ((Any) -> Any?)?
 
-        public init(
+        init(
             stateTypeList: [any BusinessState.Type],
             viewBuilder: @escaping CoordinatorViewBuilder,
             eventHandler: ((Any) -> Any?)? = nil
