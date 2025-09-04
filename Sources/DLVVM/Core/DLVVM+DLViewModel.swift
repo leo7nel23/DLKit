@@ -315,17 +315,22 @@ public extension DLVVM {
 
             childViewModel.state.requestPublisher
                 .print("↖️ [Request]: \(from) -> \(to)")
-                .sink { [weak self] request in
+                .sink { [weak self, childViewModel] request in
+                    guard let self else { return }
                     switch request {
                     case .dismiss:
-                        guard let navigatableParent = self?.state as? any NavigatableState else { return }
+                        guard let navigatableParent = self.state as? any NavigatableState else { return }
                         navigatableParent.dismissAny()
 
                     case let .event(childEvent):
                         // Handle business event
                         if let parentAction = toParentAction?(childEvent) {
-                            self?.send(parentAction)
+                            self.send(parentAction)
                         }
+
+                    case let .command(childCommand):
+                        let effect = childViewModel.reducer.reduce(into: childViewModel.state, command: childCommand)
+                        childViewModel.executeEffect(effect)
                     }
                 }
                 .store(in: &subscription)

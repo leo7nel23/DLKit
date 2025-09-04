@@ -18,25 +18,27 @@ public extension DLVVM {
 
 extension DLVVM {
     /// Request type for communication between child and parent ViewModels
-    enum ViewModelRequest<Event> {
+    enum ViewModelRequest<R: Reducer> {
         /// Request parent to dismiss this view
         case dismiss
         /// Business logic event to be handled by parent
-        case event(Event)
+        case event(R.Event)
+        /// Command
+        case command(R.Command)
     }
 }
 
 nonisolated(unsafe) private var requestSubjectAssociatedKey: Void?
 
 extension DLVVM.BusinessState {
-    var requestSubject: PassthroughSubject<DLVVM.ViewModelRequest<R.Event>, Never> {
+    var requestSubject: PassthroughSubject<DLVVM.ViewModelRequest<R>, Never> {
         if let subject = objc_getAssociatedObject(
             self,
             &requestSubjectAssociatedKey
-        ) as? PassthroughSubject<DLVVM.ViewModelRequest<R.Event>, Never> {
+        ) as? PassthroughSubject<DLVVM.ViewModelRequest<R>, Never> {
             return subject
         } else {
-            let subject = PassthroughSubject<DLVVM.ViewModelRequest<R.Event>, Never>()
+            let subject = PassthroughSubject<DLVVM.ViewModelRequest<R>, Never>()
             objc_setAssociatedObject(
                 self,
                 &requestSubjectAssociatedKey,
@@ -47,21 +49,25 @@ extension DLVVM.BusinessState {
         }
     }
 
-    var requestPublisher: AnyPublisher<DLVVM.ViewModelRequest<R.Event>, Never> {
+    var requestPublisher: AnyPublisher<DLVVM.ViewModelRequest<R>, Never> {
         requestSubject.eraseToAnyPublisher()
     }
 
-    internal func fireRequest(_ request: DLVVM.ViewModelRequest<R.Event>) {
+    internal func fireRequest(_ request: DLVVM.ViewModelRequest<R>) {
         requestSubject.send(request)
     }
     
     // MARK: - Convenience methods
     
-    internal func fireEvent(_ event: R.Event) {
+    public func fireEvent(_ event: R.Event) {
         fireRequest(.event(event))
     }
     
     internal func fireDismiss() {
         fireRequest(.dismiss)
+    }
+
+    public func dispatch(_ command: R.Command) {
+        fireRequest(.command(command))
     }
 }

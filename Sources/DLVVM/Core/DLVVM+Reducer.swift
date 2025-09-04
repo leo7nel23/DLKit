@@ -13,9 +13,17 @@ public extension DLVVM {
     protocol Reducer<State, Action, Event> where State: BusinessState {
         associatedtype State
         associatedtype Action
-        associatedtype Event
+        associatedtype Event = Void
+        associatedtype Command = Void
 
         func reduce(into state: State, action: Action) -> Procedure<Action, State>
+        func reduce(into state: State, command: Command) -> Procedure<Action, State>
+    }
+}
+
+public extension DLVVM.Reducer where Command == Void {
+    func reduce(into state: State, command: Command) -> Procedure<Action, State> {
+        .none
     }
 }
 
