@@ -315,7 +315,7 @@ public extension DLVVM {
 
             childViewModel.state.requestPublisher
                 .print("↖️ [Request]: \(from) -> \(to)")
-                .sink { [weak self, childViewModel] request in
+                .sink { [weak self, childViewModel, state] request in
                     guard let self else { return }
                     switch request {
                     case .dismiss:
@@ -329,7 +329,7 @@ public extension DLVVM {
                         }
 
                     case let .command(childCommand):
-                        let effect = childViewModel.reducer.reduce(into: childViewModel.state, command: childCommand)
+                        let effect = childViewModel.reducer.reduce(into: state, command: childCommand)
                         childViewModel.executeEffect(effect)
                     }
                 }
