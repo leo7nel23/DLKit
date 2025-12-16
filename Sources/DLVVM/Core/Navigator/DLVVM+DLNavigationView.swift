@@ -32,13 +32,40 @@ public extension DLVVM {
             rootReducer: State.R,
             navigationState: NavigationFlow
         ) {
-            self.viewModel = DLViewModel(
-                initialState: navigationState,
-                reducer: NavigationFeature()
-            )
-            if navigationState.rootInfo == nil {
+            // Cache key for NavigatorFlow viewModel
+            let navigatorFlowCacheKey = "NavigatorFlow_\(navigationState.id)"
+            
+            // Check if we have cached NavigatorFlow viewModel
+            if let cachedNavigatorFlow = navigationState.rootViewModelCache[navigatorFlowCacheKey] as? DLViewModel<NavigationFlow> {
+                // Reuse cached NavigatorFlow
+                self.viewModel = cachedNavigatorFlow
+            } else {
+                // Create new NavigatorFlow and cache it
+                self.viewModel = DLViewModel(
+                    initialState: navigationState,
+                    reducer: NavigationFeature()
+                )
+                navigationState.rootViewModelCache[navigatorFlowCacheKey] = self.viewModel
+            }
+            
+            // Generate cache key for root viewModel based on state type and reducer type
+            let rootCacheKey = "\(State.self)_\(State.R.self)"
+            
+            // Check NavigationFlow's cache for root viewModel
+            if let cachedViewModel = navigationState.rootViewModelCache[rootCacheKey] as? DLViewModel<State> {
+                // Check if cached viewModel's state matches current rootState
+                if cachedViewModel.state !== rootState {
+                    // State instance changed, need to rebind
+                    let rootViewModel = viewModel.bindRootView(state: rootState, reducer: rootReducer)
+                    navigationState.setUp(rootViewModel: rootViewModel)
+                    navigationState.rootViewModelCache[rootCacheKey] = rootViewModel
+                }
+                // else: reuse cached viewModel, no action needed
+            } else {
+                // No cache, create new root viewModel
                 let rootViewModel = viewModel.bindRootView(state: rootState, reducer: rootReducer)
                 navigationState.setUp(rootViewModel: rootViewModel)
+                navigationState.rootViewModelCache[rootCacheKey] = rootViewModel
             }
         }
 

@@ -21,6 +21,9 @@ public extension DLVVM {
 
         private(set) var rootInfo: NavigatorInfo!
         var manager: Navigator!
+        
+        // Cache for root viewModel to persist across DLNavigationView recreations
+        var rootViewModelCache: [String: any DLViewModelProtocol] = [:]
 
         let stateTypeList: [any BusinessState.Type]
 
@@ -46,6 +49,10 @@ public extension DLVVM {
                     id: id,
                     viewBuilder: viewBuilder
                 )
+            } else {
+                // Update manager's root to point to the new rootViewModel
+                // This is necessary when DLNavigationView is recreated
+                manager.root = rootInfo
             }
         }
 

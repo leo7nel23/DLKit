@@ -7,9 +7,9 @@
 
 import Combine
 
-public typealias Navigator = DLViewModel<NavigationFlow>
+public typealias NavigatorFlow = DLViewModel<NavigationFlow>
 
-public extension Navigator {
+public extension NavigatorFlow {
     /// Binds a root view model to the navigation system
     /// 
     /// This method creates a root view model and establishes the necessary navigation
@@ -131,7 +131,7 @@ public extension Navigator {
     private func bindRouter<BizState: NavigatableState>(
         viewModel: DLViewModel<BizState>
     ) {
-        guard !(viewModel is Navigator) else { return }
+        guard !(viewModel is NavigatorFlow) else { return }
         let fromAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(viewModel.state).toOpaque())".suffix(5) + ")"
         let from = String(describing: BizState.self.R) + fromAddress
         let toAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(self.state).toOpaque())".suffix(5) + ")"
@@ -280,7 +280,7 @@ public extension Navigator {
                         ) else { return nil }
 
                         // if it's navigator, look type from next
-                        if let navigator = nextViewModel as? Navigator {
+                        if let navigator = nextViewModel as? NavigatorFlow {
                             for stateType in navigator.stateTypeList {
                                 if let stateType = stateType as? (any NavigatableState.Type) {
                                     let matcher = makeMatcher(from: pastViewModel, navigator, stateType)
