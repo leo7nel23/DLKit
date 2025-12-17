@@ -71,7 +71,6 @@ public extension DLVVM {
                 if targetCount == 0 {
                     return index == 0 ? [] : nil
                 } else if subPath.count > targetCount {
-                    targetCount = 0
                     return Array(subPath[0..<targetCount])
                 } else {
                     targetCount -= subPath.count
