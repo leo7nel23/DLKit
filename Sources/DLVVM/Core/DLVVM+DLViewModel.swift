@@ -307,7 +307,11 @@ public extension DLVVM {
             event toParentAction: ((ChildState.R.Event) -> State.R.Action?)?,
             reducer childReducer: ChildState.R
         ) {
-            guard type(of: state).R.Event != Void.self else { return }
+            if type(of: state).R.Event == Void.self,
+               type(of: state).R.Command == Void.self {
+                return
+            }
+
             let fromAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(childViewModel).toOpaque())".suffix(5) + ")"
             let from = String(describing: ChildState.self.R) + fromAddress
             let toAddress = "(" + "\(Unmanaged<AnyObject>.passUnretained(self).toOpaque())".suffix(5) + ")"
