@@ -32,7 +32,7 @@ public extension DLVVM {
             didSet {
                 // Update NavigationFlow's pathCount
                 navigationFlow?.pathCount = path.count
-                
+
                 if path.count < oldValue.count { // user pop
                     syncBackToPaths()
                 }
@@ -45,7 +45,7 @@ public extension DLVVM {
 
         @ObservationIgnored
         var onDismissSubject = PassthroughSubject<Void, Never>()
-        
+
         @ObservationIgnored
         weak var navigationFlow: NavigationFlow?
 

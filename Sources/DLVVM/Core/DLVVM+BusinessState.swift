@@ -56,13 +56,13 @@ extension DLVVM.BusinessState {
     internal func fireRequest(_ request: DLVVM.ViewModelRequest<R>) {
         requestSubject.send(request)
     }
-    
+
     // MARK: - Convenience methods
-    
+
     public func fireEvent(_ event: R.Event) {
         fireRequest(.event(event))
     }
-    
+
     internal func fireDismiss() {
         fireRequest(.dismiss)
     }

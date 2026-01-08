@@ -80,7 +80,6 @@ public struct VFlow: Layout {
     }
   }
 
-
   func generateColumns(
     _ maxHeight: CGFloat,
     _ proposal: ProposedViewSize,

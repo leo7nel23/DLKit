@@ -144,7 +144,6 @@ public extension NavigatorFlow {
             }
             .store(in: &subscription)
 
-
         viewModel.routePublisher
             .print("⤴️ [Router]: \(from) -> \(to)")
             .sink { [weak self, weak viewModel] futureStateInfo in
@@ -296,8 +295,7 @@ public extension NavigatorFlow {
                             keyInfo.routeStyle
                         )
                     } else if let keyInfo = erased.navigationTyped(as: Next.self),
-                              let navigationViewModel
-                    {
+                              let navigationViewModel {
                         let rootViewModel = navigationViewModel.bindRootView(
                             state: keyInfo.rootState,
                             reducer: keyInfo.rootReducer

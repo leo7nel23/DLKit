@@ -34,7 +34,7 @@ public extension DLVVM {
         ) {
             // Cache key for NavigatorFlow viewModel
             let navigatorFlowCacheKey = "NavigatorFlow_\(navigationState.id)"
-            
+
             // Check if we have cached NavigatorFlow viewModel
             if let cachedNavigatorFlow = navigationState.rootViewModelCache[navigatorFlowCacheKey] as? DLViewModel<NavigationFlow> {
                 // Reuse cached NavigatorFlow
@@ -47,10 +47,10 @@ public extension DLVVM {
                 )
                 navigationState.rootViewModelCache[navigatorFlowCacheKey] = self.viewModel
             }
-            
+
             // Generate cache key for root viewModel based on state type and reducer type
             let rootCacheKey = "\(State.self)_\(State.R.self)"
-            
+
             // Check NavigationFlow's cache for root viewModel
             if let cachedViewModel = navigationState.rootViewModelCache[rootCacheKey] as? DLViewModel<State> {
                 // Check if cached viewModel's state matches current rootState
@@ -117,8 +117,8 @@ public extension DLVVM {
             }
         }
     }
-    
+
     // MARK: - DLNavigatorView
-    
+
     typealias DLNavigatorView = DLNavigationView
 }

@@ -32,7 +32,7 @@ public extension DLVVM {
         public static var none: Self {
             Self(operation: .none)
         }
-        
+
         /// Request parent to dismiss this view
         /// 
         /// Allows any BusinessState to request dismissal from parent.
@@ -95,7 +95,7 @@ public extension DLVVM {
                             group.addTask(priority: priority) {
                                 await operation(send)
                             }
-                            
+
                         case .dismiss:
                             // Dismiss requests are handled synchronously by the state
                             // They will be processed in the DLViewModel layer
@@ -126,7 +126,7 @@ public extension DLVVM {
 
                     case let .run(_, operation):
                         await operation(send)
-                        
+
                     case .dismiss:
                         // Execute dismiss at user-specified position
                         // User is responsible for placing dismiss appropriately

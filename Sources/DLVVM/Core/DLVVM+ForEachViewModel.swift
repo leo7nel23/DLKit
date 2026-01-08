@@ -24,16 +24,16 @@ public extension DLVVM {
         public let data: Data
         public let idKeyPath: KeyPath<Data.Element, ID>
         public let content: (Data.Element) -> Content
-        
+
         /// Stable ID based on data content
         public let id: Int
-        
+
         /// Internal initializer - use the public extensions instead
         internal init(data: Data, id: KeyPath<Data.Element, ID>, content: @escaping (Data.Element) -> Content) {
             self.data = data
             self.idKeyPath = id
             self.content = content
-            
+
             // Calculate stable ID based on data content
             var hasher = Hasher()
             for element in data {

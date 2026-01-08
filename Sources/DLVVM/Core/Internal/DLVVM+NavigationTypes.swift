@@ -13,7 +13,7 @@ public extension DLVVM {
         case fullScreenCover
         case sheet
     }
-    
+
     enum DismissType {
         case dismiss
         case pop

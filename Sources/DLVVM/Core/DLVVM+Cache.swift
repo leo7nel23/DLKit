@@ -22,34 +22,34 @@ extension DLVVM {
             viewModels[key]
         }
     }
-    
+
     /// Container to cache array instances with content comparison for SwiftUI stability (legacy support)
     class ArrayContainer<ChildState: BusinessState & Identifiable> {
         let viewModels: [DLViewModel<ChildState>]
         private let contentSnapshot: [ChildState.ID]
-        
+
         init(viewModels: [DLViewModel<ChildState>], contentSnapshot: [ChildState.ID]) {
             self.viewModels = viewModels
             self.contentSnapshot = contentSnapshot
         }
-        
+
         /// Check if the current content matches the cached content
         func hasEqualContent(to states: [ChildState]) -> Bool {
             let newSnapshot = states.map { $0.id }
             return contentSnapshot == newSnapshot
         }
     }
-    
+
     /// Container to cache array instances with content comparison for SwiftUI stability
     class CachedViewModelArray<ChildState: BusinessState & Identifiable> {
         let viewModels: [DLViewModel<ChildState>]
         private let contentSnapshot: [ChildState.ID]
-        
+
         init(viewModels: [DLViewModel<ChildState>], contentSnapshot: IdentifiedArray<ChildState>) {
             self.viewModels = viewModels
             self.contentSnapshot = contentSnapshot.map { $0.id }
         }
-        
+
         /// Check if the current content matches the cached content
         func hasEqualContent(to identifiedArray: IdentifiedArray<ChildState>) -> Bool {
             let newSnapshot = identifiedArray.map { $0.id }

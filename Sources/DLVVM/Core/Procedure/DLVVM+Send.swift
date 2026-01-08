@@ -8,7 +8,7 @@
 import SwiftUI
 
 @MainActor
-public struct Send<Action>: Sendable {
+public struct Send <Action> {
     let send: @MainActor @Sendable (Action) -> Void
 
     public init(send: @escaping @MainActor @Sendable (Action) -> Void) {

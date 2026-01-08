@@ -41,7 +41,7 @@ public struct HFlow: Layout {
 
     return CGSize(width: maxWidth, height: height)
   }
-  
+
   public func placeSubviews(
     in bounds: CGRect,
     proposal: ProposedViewSize,
@@ -79,7 +79,6 @@ public struct HFlow: Layout {
       origin.y += (row.maxHeight(proposal) + verticalSpacing)
     }
   }
-  
 
   func generateRows(
     _ maxWidth: CGFloat,
@@ -124,7 +123,7 @@ extension [LayoutSubviews.Element] {
   }
 }
 
-//#Preview {
+// #Preview {
 //  ScrollView(.vertical) {
 //    HFlow(alignment: .trailing, verticalSpacing: 10, horizontalSpacing: 10) {
 //      ForEach(1...100, id: \.self) { tag in
@@ -136,4 +135,4 @@ extension [LayoutSubviews.Element] {
 //    }
 //    .padding(50)
 //  }
-//}
+// }

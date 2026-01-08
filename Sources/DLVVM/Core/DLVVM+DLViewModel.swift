@@ -179,7 +179,32 @@ public extension DLVVM {
                 cacheKey: key
             )
         }
-        
+
+        public func scope<ChildState: NavigationFlow, Output>(
+            flow childState: ChildState,
+            to mapper: ((Output) -> State.R.Action?)? = nil
+        ) -> NavigationFlow {
+            let key = "\(Unmanaged<AnyObject>.passUnretained(childState).toOpaque())"
+            if let cached = object(forKey: key) as? NavigationFlow {
+                return cached
+            }
+
+            _ = _scope(
+                state: childState,
+                event: {
+                    if let action = $0 as? Output,
+                    let event = mapper?(action) {
+                        event
+                    } else {
+                        nil
+                    }
+                },
+                reducer: NavigationFeature(),
+                cacheKey: key
+            )
+            return childState
+        }
+
         /// Creates an array of scoped child view models from an IdentifiedArray
         ///
         /// This method provides type-safe scoping for identified collections, ensuring
@@ -201,10 +226,10 @@ public extension DLVVM {
         ) -> [DLViewModel<ChildState>] where ChildState.R.State == ChildState {
             let key = cacheKey(keyPath: arrayKeyPath, reducerType: type(of: childReducer))
             let identifiedArray = state[keyPath: arrayKeyPath]
-            
+
             // Array-level caching key based on state content
             let arrayContentKey = key + "_identified_array"
-            
+
             // Check if we have a cached array with the same content
             if let cachedContainer = object(forKey: arrayContentKey) as? CachedViewModelArray<ChildState>,
                cachedContainer.hasEqualContent(to: identifiedArray) {
@@ -225,7 +250,7 @@ public extension DLVVM {
                 // Return the same array instance for SwiftUI stability
                 return cachedContainer.viewModels
             }
-            
+
             // Content changed or no cache - rebuild array
             let cachedViewModels = object(forKey: key) as? ArrayViewModels ?? ArrayViewModels()
             let newCachedViewModels = ArrayViewModels()
@@ -261,7 +286,7 @@ public extension DLVVM {
             setObject(newCachedViewModels, forKey: key)
             let container = CachedViewModelArray(viewModels: viewModels, contentSnapshot: identifiedArray)
             setObject(container, forKey: arrayContentKey)
-            
+
             return viewModels
         }
 

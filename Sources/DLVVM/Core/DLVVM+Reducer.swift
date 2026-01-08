@@ -37,7 +37,6 @@ public extension DLVVM.Reducer where State.R.Action == Void {
     func reduce(into state: State, action: Action) -> Procedure<Action, State> { .none }
 }
 
-
 public extension DLVVM.Reducer where State.R == Self, State: NavigatableState {
     func route<ChildState: BusinessState>(
         childState keyPath: WritableKeyPath<State, ChildState?>,

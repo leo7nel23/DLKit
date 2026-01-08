@@ -21,10 +21,10 @@ public extension DLVVM {
 
         private(set) var rootInfo: NavigatorInfo!
         var manager: Navigator!
-        
+
         // Cache for root viewModel to persist across DLNavigationView recreations
         var rootViewModelCache: [String: any DLViewModelProtocol] = [:]
-        
+
         // Published path count for observing navigation depth
         @Published public internal(set) var pathCount: Int = 0
 
@@ -59,7 +59,7 @@ public extension DLVVM {
                 manager.root = rootInfo
             }
         }
-        
+
         @MainActor
         func buildView(for navigatorInfo: NavigatorInfo) -> AnyView {
             let view: any View = {
