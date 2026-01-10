@@ -222,7 +222,7 @@ public extension NavigatorFlow {
                 guard let self else { return }
                 let result: ((any DLViewModelProtocol)?, RouteStyle)? = {
                     if let keyInfo = erased.typed(as: Next.self) {
-                        guard let nextViewModel = pastViewScope(
+                        guard let nextViewModel = self.pastViewScope(
                             state: keyInfo.keyPath,
                             to: pastViewModel,
                             event: keyInfo.eventMapper,
@@ -271,7 +271,7 @@ public extension NavigatorFlow {
                 var skipRoute = false
                 let result: ((any DLViewModelProtocol)?, RouteStyle)? = {
                     if let keyInfo = erased.typed(as: Next.self) {
-                        guard let nextViewModel = navigatorScope(
+                        guard let nextViewModel = self.navigatorScope(
                             state: keyInfo.keyPath,
                             to: pastViewModel,
                             event: keyInfo.eventMapper,
@@ -282,10 +282,10 @@ public extension NavigatorFlow {
                         if let navigator = nextViewModel as? NavigatorFlow {
                             for stateType in navigator.stateTypeList {
                                 if let stateType = stateType as? (any NavigatableState.Type) {
-                                    let matcher = makeMatcher(from: pastViewModel, navigator, stateType)
+                                    let matcher = self.makeMatcher(from: pastViewModel, navigator, stateType)
                                     if matcher.match(erased) != nil { break }
                                 } else {
-                                    let matcher = makeMatcher(from: pastViewModel, stateType)
+                                    let matcher = self.makeMatcher(from: pastViewModel, stateType)
                                     if matcher.match(erased) != nil { break }
                                 }
                             }
@@ -304,8 +304,8 @@ public extension NavigatorFlow {
 
                         // swap cleaner to check for root popped
                         if keyInfo.routeStyle == .push {
-                            navigatableKeyPaths[rootViewModel.id] = navigatableKeyPaths[navigationViewModel.id]
-                            navigatableKeyPaths[navigationViewModel.id] = nil
+                            self.navigatableKeyPaths[rootViewModel.id] = self.navigatableKeyPaths[navigationViewModel.id]
+                            self.navigatableKeyPaths[navigationViewModel.id] = nil
                         }
 
                         skipRoute = true

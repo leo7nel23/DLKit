@@ -23,6 +23,7 @@ public extension DLVVM {
     }
 }
 
+@MainActor
 public extension DLView {
     func send(_ action: Action) {
         viewModel.send(action)
